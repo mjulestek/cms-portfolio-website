@@ -1,0 +1,32 @@
+import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { requireAdmin } from '@/lib/admin-auth';
+import { apiError, handleApiError } from '@/lib/api-errors';
+import { homepageTimelineSchema } from '@/lib/validation';
+
+export const dynamic = 'force-dynamic';
+
+export async function PUT(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    const json = await req.json().catch(() => null);
+    if (!json) return apiError('VALIDATION_ERROR', 'Invalid JSON request body', 400);
+    const input = homepageTimelineSchema.partial().parse(json);
+    const item = await prisma.homepageTimelineItem.update({ where: { id: params.id }, data: input });
+    return NextResponse.json({ timelineItem: item });
+  } catch (e) {
+    return handleApiError(e);
+  }
+}
+
+export async function DELETE(_: Request, { params }: { params: { id: string } }) {
+  try {
+    const auth = await requireAdmin();
+    if (!auth.ok) return auth.response;
+    await prisma.homepageTimelineItem.delete({ where: { id: params.id } });
+    return NextResponse.json({ success: true });
+  } catch (e) {
+    return handleApiError(e);
+  }
+}

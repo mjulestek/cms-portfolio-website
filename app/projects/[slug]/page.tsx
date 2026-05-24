@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Card, Badge, Button } from '@/components/ui/card';
+import { Badge, Button, Card, MediaPlaceholder } from '@/components/ui/card';
 import { VideoGallery } from '@/components/videos/video-gallery';
 import { prisma } from '@/lib/prisma';
 import { mapProject, resolveProjectReferences } from '@/lib/mappers';
@@ -28,83 +28,89 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function ProjectDetail({ params }: { params: { slug: string } }) {
-  const p = await getProject(params.slug);
-  if (!p) return notFound();
+  const project = await getProject(params.slug);
+  if (!project) return notFound();
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <p className="text-cyan-300">Case study</p>
-          <h1 className="mt-2 text-5xl font-black text-white">{p.title}</h1>
-          <p className="mt-4 text-slate-300">{p.tagline}</p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            {p.tags.map((t: { id: string; name: string; slug: string }) => (
-              <Badge key={t.id}>{t.name}</Badge>
-            ))}
+    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-stretch">
+        <Card className="flex min-h-[360px] flex-col justify-between">
+          <div>
+            <p className="text-sm font-bold uppercase tracking-[0.25em] text-cyan-300">Case study</p>
+            <h1 className="mt-3 text-4xl font-black leading-tight text-white sm:text-5xl">{project.title}</h1>
+            <p className="mt-4 text-lg leading-8 text-slate-300">{project.tagline}</p>
+
+            {project.tags.length > 0 && (
+              <div className="mt-6 flex flex-wrap gap-2">
+                {project.tags.map(tag => (
+                  <Badge key={tag.id}>{tag.name}</Badge>
+                ))}
+              </div>
+            )}
           </div>
-          <div className="mt-6 flex flex-wrap gap-3">
-            {p.githubUrl && <Button href={p.githubUrl} variant="secondary">GitHub</Button>}
-            {p.liveUrl && <Button href={p.liveUrl} variant="secondary">Live site</Button>}
-            {p.pdfUrl && <Button href={p.pdfUrl} variant="secondary">Case study PDF</Button>}
+
+          <div className="mt-8 flex flex-wrap gap-3">
+            {project.githubUrl && <Button href={project.githubUrl} variant="secondary">GitHub</Button>}
+            {project.liveUrl && <Button href={project.liveUrl} variant="secondary">Live site</Button>}
+            {project.pdfUrl && <Button href={project.pdfUrl} variant="secondary">Case study PDF</Button>}
           </div>
         </Card>
 
-        {p.coverImageUrl && (
-          <Card className="overflow-hidden p-0">
-            <img
-              src={p.coverImageUrl}
-              alt={p.title}
-              className="h-full max-h-[420px] min-h-[260px] w-full rounded-3xl object-cover"
-            />
-          </Card>
-        )}
-
-        {!p.coverImageUrl && p.videos.length > 0 && (
-          <VideoGallery items={p.videos} />
-        )}
+        <Card className="min-h-[360px] p-0">
+          <div className="h-full min-h-[360px] overflow-hidden rounded-3xl bg-slate-950/40">
+            {project.coverImageUrl ? (
+              <img
+                src={project.coverImageUrl}
+                alt={project.title}
+                className="h-full max-h-[520px] min-h-[360px] w-full object-cover"
+              />
+            ) : (
+              <MediaPlaceholder label="Project cover image missing" />
+            )}
+          </div>
+        </Card>
       </div>
 
-      {p.coverImageUrl && p.videos.length > 0 && (
+      {project.videos.length > 0 && (
         <Card className="mt-6">
           <h2 className="mb-4 text-2xl font-black text-white">Project videos</h2>
-          <VideoGallery items={p.videos} />
+          <VideoGallery items={project.videos} />
         </Card>
       )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-2">
-        {p.story && (
+        {project.story && (
           <Card>
             <h2 className="text-2xl font-black text-white">Engineering story</h2>
-            <p className="mt-4 leading-8 text-slate-300">{p.story}</p>
+            <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-300">{project.story}</p>
           </Card>
         )}
-        {p.challenge && (
+        {project.challenge && (
           <Card>
             <h2 className="text-2xl font-black text-white">Challenge</h2>
-            <p className="mt-4 leading-8 text-slate-300">{p.challenge}</p>
+            <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-300">{project.challenge}</p>
           </Card>
         )}
-        {p.solution && (
+        {project.solution && (
           <Card>
             <h2 className="text-2xl font-black text-white">Solution</h2>
-            <p className="mt-4 leading-8 text-slate-300">{p.solution}</p>
+            <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-300">{project.solution}</p>
           </Card>
         )}
-        {p.results && (
+        {project.results && (
           <Card>
             <h2 className="text-2xl font-black text-white">Results</h2>
-            <p className="mt-4 leading-8 text-slate-300">{p.results}</p>
+            <p className="mt-4 whitespace-pre-wrap leading-8 text-slate-300">{project.results}</p>
           </Card>
         )}
       </div>
 
-      {p.metrics && typeof p.metrics === 'object' && Object.keys(p.metrics).length > 0 && (
+      {project.metrics && typeof project.metrics === 'object' && Object.keys(project.metrics).length > 0 && (
         <Card className="mt-6">
           <h2 className="text-2xl font-black text-white">Metrics</h2>
-          <div className="mt-4 grid gap-4 sm:grid-cols-3">
-            {Object.entries(p.metrics as Record<string, string>).map(([label, value]) => (
-              <div key={label} className="rounded-2xl bg-white/5 p-4">
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Object.entries(project.metrics as Record<string, string>).map(([label, value]) => (
+              <div key={label} className="rounded-2xl border border-white/10 bg-white/5 p-4">
                 <p className="text-2xl font-black text-cyan-300">{value}</p>
                 <p className="mt-1 text-sm text-slate-400">{label}</p>
               </div>
@@ -113,12 +119,12 @@ export default async function ProjectDetail({ params }: { params: { slug: string
         </Card>
       )}
 
-      {p.techStack.length > 0 && (
+      {project.techStack.length > 0 && (
         <Card className="mt-6">
           <h2 className="text-2xl font-black text-white">Tech stack</h2>
           <div className="mt-4 flex flex-wrap gap-2">
-            {p.techStack.map((s: { id: string; name: string; category: string }) => (
-              <Badge key={s.id}>{s.name}</Badge>
+            {project.techStack.map(skill => (
+              <Badge key={skill.id}>{skill.name}</Badge>
             ))}
           </div>
         </Card>

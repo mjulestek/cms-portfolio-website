@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import { Card, Badge } from '@/components/ui/card';
+import { Badge, Card, MediaPlaceholder } from '@/components/ui/card';
 import { VideoGallery } from '@/components/videos/video-gallery';
 import { prisma } from '@/lib/prisma';
 import { mapBlog, resolveBlogReferences } from '@/lib/mappers';
@@ -28,31 +28,38 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 }
 
 export default async function BlogDetail({ params }: { params: { slug: string } }) {
-  const p = await getPost(params.slug);
-  if (!p) return notFound();
+  const post = await getPost(params.slug);
+  if (!post) return notFound();
 
   return (
-    <article className="mx-auto max-w-3xl px-4 py-12">
-      <div className="flex flex-wrap gap-2">
-        {p.tags.map((t: { id: string; name: string; slug: string }) => (
-          <Badge key={t.id}>{t.name}</Badge>
-        ))}
-      </div>
-      <h1 className="mt-4 text-5xl font-black text-white">{p.title}</h1>
-      <p className="mt-4 text-xl text-slate-300">{p.excerpt}</p>
-
-      {p.coverImageUrl && (
-        <img src={p.coverImageUrl} alt={p.title} className="mt-8 max-h-[420px] w-full rounded-3xl object-cover" />
-      )}
-
-      {p.videos.length > 0 && (
-        <div className="mt-8">
-          <VideoGallery items={p.videos} />
+    <article className="mx-auto w-full max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
+      {post.tags.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {post.tags.map(tag => (
+            <Badge key={tag.id}>{tag.name}</Badge>
+          ))}
         </div>
+      )}
+      <h1 className="mt-4 text-4xl font-black leading-tight text-white sm:text-5xl">{post.title}</h1>
+      <p className="mt-4 text-xl leading-8 text-slate-300">{post.excerpt}</p>
+
+      <div className="mt-8 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/40">
+        {post.coverImageUrl ? (
+          <img src={post.coverImageUrl} alt={post.title} className="max-h-[480px] w-full object-cover" />
+        ) : (
+          <MediaPlaceholder label="Blog cover image missing" />
+        )}
+      </div>
+
+      {post.videos.length > 0 && (
+        <Card className="mt-8">
+          <h2 className="mb-4 text-2xl font-black text-white">Related videos</h2>
+          <VideoGallery items={post.videos} />
+        </Card>
       )}
 
       <Card className="mt-8">
-        <p className="leading-8 text-slate-300">{p.body}</p>
+        <div className="whitespace-pre-wrap leading-8 text-slate-300">{post.body}</div>
       </Card>
     </article>
   );

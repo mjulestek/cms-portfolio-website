@@ -41,6 +41,11 @@ export const projectSchema = z.object({
   tagIds: z.array(objectIdSchema).default([]),
   techStackIds: z.array(objectIdSchema).default([]),
   videoIds: z.array(objectIdSchema).default([]),
+  homepageVisible: z.boolean().default(true),
+  homepageOrder: z.number().int().min(0).default(0),
+  homepagePlacement: z.string().trim().optional().nullable(),
+  readTime: z.string().trim().optional().nullable(),
+  ctaLabel: z.string().trim().optional().nullable(),
 });
 
 export const blogSchema = z.object({
@@ -51,8 +56,13 @@ export const blogSchema = z.object({
   status: statusSchema.default('DRAFT'),
   featured: z.boolean().default(false),
   coverImageKey: optionalKeySchema,
+  categoryId: objectIdSchema.optional().nullable().or(z.literal('')),
   tagIds: z.array(objectIdSchema).default([]),
   videoIds: z.array(objectIdSchema).default([]),
+  homepageVisible: z.boolean().default(true),
+  homepageOrder: z.number().int().min(0).default(0),
+  readTime: z.string().trim().optional().nullable(),
+  ctaLabel: z.string().trim().optional().nullable(),
 });
 
 export const skillSchema = z.object({
@@ -84,12 +94,25 @@ export const socialLinkSchema = z.object({
 export const homepageSchema = z.object({
   heroHeadline: z.string().trim().min(1),
   heroSubtext: z.string().trim().min(1),
+  heroImageKey: optionalKeySchema,
   ctaText: z.string().trim().min(1),
   ctaUrl: z.string().trim().min(1),
   aboutText: z.string().trim().min(1),
   metaTitle: z.string().trim().min(1),
   metaDescription: z.string().trim().min(1),
   featuredVideoId: objectIdSchema.optional().nullable().or(z.literal('')),
+  timelineEyebrow: z.string().trim().optional().nullable(),
+  timelineTitle: z.string().trim().optional().nullable(),
+  timelineSubtitle: z.string().trim().optional().nullable(),
+  writingEyebrow: z.string().trim().optional().nullable(),
+  writingTitle: z.string().trim().optional().nullable(),
+  writingSubtitle: z.string().trim().optional().nullable(),
+  projectsEyebrow: z.string().trim().optional().nullable(),
+  projectsTitle: z.string().trim().optional().nullable(),
+  projectsSubtitle: z.string().trim().optional().nullable(),
+  stackEyebrow: z.string().trim().optional().nullable(),
+  stackTitle: z.string().trim().optional().nullable(),
+  stackSubtitle: z.string().trim().optional().nullable(),
 });
 
 export const mediaSchema = z.object({
@@ -110,4 +133,64 @@ export const resumeSchema = z.object({
 
 export const contactMessageUpdateSchema = z.object({
   status: z.enum(['NEW', 'READ', 'REPLIED', 'ARCHIVED']),
+});
+
+
+export const homepageTimelineSchema = z.object({
+  year: z.string().trim().min(1),
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  imageKey: optionalKeySchema,
+  externalUrl: optionalUrlSchema,
+  order: z.number().int().min(0).default(0),
+  active: z.boolean().default(true),
+});
+
+export const homepageStackSchema = z.object({
+  title: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  iconKey: optionalKeySchema,
+  externalUrl: optionalUrlSchema,
+  order: z.number().int().min(0).default(0),
+  active: z.boolean().default(true),
+});
+
+export const footerSettingsSchema = z.object({
+  logoText: z.string().trim().min(1),
+  location: z.string().trim().min(1),
+  email: z.string().trim().email(),
+  linkedInUrl: optionalUrlSchema,
+  copyrightText: z.string().trim().min(1),
+});
+
+export const footerNavigationLinkSchema = z.object({
+  column: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+  order: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export const legalLinkSchema = z.object({
+  label: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+  order: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+export const homepageCTASettingSchema = z.object({
+  section: z.string().trim().min(1),
+  label: z.string().trim().min(1),
+  url: z.string().trim().min(1),
+  order: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
+});
+
+
+export const blogCategorySchema = z.object({
+  name: z.string().trim().min(1),
+  slug: z.string().trim().regex(/^[a-z0-9-]+$/, 'Use lowercase letters, numbers, and hyphens only'),
+  order: z.number().int().min(0).default(0),
+  visible: z.boolean().default(true),
 });

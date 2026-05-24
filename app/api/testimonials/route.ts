@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { handleApiError } from '@/lib/api-errors';
-import { assetUrlFromKey } from '@/lib/env';
+import { assetUrlFromKey } from '@/lib/s3';
 
 export const dynamic = 'force-dynamic';
 

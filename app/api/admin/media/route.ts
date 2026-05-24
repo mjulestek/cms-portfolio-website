@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAdmin } from '@/lib/admin-auth';
 import { apiError, handleApiError } from '@/lib/api-errors';
 import { mediaSchema } from '@/lib/validation';
-import { assetUrlFromKey } from '@/lib/env';
+import { assetUrlFromKey } from '@/lib/s3';
 
 export const dynamic = 'force-dynamic';
 

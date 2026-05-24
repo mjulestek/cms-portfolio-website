@@ -1,243 +1,272 @@
-import { Card, Badge, Button } from '@/components/ui/card';
-import { prisma } from '@/lib/prisma';
-import { mapProject, resolveHomepageFeaturedVideo, resolveProjectReferences, type MappedProject } from '@/lib/mappers';
 import Link from 'next/link';
+import { WritingSection } from '@/components/homepage/writing-section';
+import { assetUrlFromKey } from '@/lib/s3';
+import { getHomepageData, type HomepageCTAView, type HomepageTimelineItemView, type HomepageStackItemView, type FooterSettingsView, type SimpleLink } from '@/lib/homepage-data';
+import type { MappedProject } from '@/lib/mappers';
 
 export const dynamic = 'force-dynamic';
 
-type HomepageContentView = { heroHeadline?: string; heroSubtext?: string; ctaText: string; ctaUrl: string; aboutText?: string; featuredVideo?: unknown } | null;
-
-// ─── Data fetching ────────────────────────────────────────────────────────────
-async function getData(): Promise<{ content: HomepageContentView; featuredProjects: MappedProject[] }> {
-  try {
-    const [content, featuredProjects] = await Promise.all([
-      prisma.homepageContent.findUnique({ where: { id: 'singleton' } }),
-      prisma.project.findMany({
-        where: { status: 'PUBLISHED', featured: true },
-        take: 3,
-        orderBy: { createdAt: 'desc' },
-      }),
-    ]);
-    const [resolvedProjects, featuredVideo] = await Promise.all([
-      resolveProjectReferences(featuredProjects),
-      resolveHomepageFeaturedVideo(content?.featuredVideoId),
-    ]);
-    return {
-      content: content ? { ...content, featuredVideo } : null,
-      featuredProjects: resolvedProjects.map(mapProject),
-    };
-  } catch (error) {
-    console.error('Failed to load homepage data', error);
-    return { content: null, featuredProjects: [] };
-  }
+function ctaFor(ctas: HomepageCTAView[], section: string, index: number, fallback: { label: string; url: string }) {
+  return ctas.filter(cta => cta.section === section).sort((a, b) => a.order - b.order)[index] ?? fallback;
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
-export default async function Home() {
-  const { content, featuredProjects } = await getData();
+function Arrow() {
+  return <span aria-hidden="true" className="ml-2 inline-block transition group-hover:translate-x-1">›</span>;
+}
 
-  const ctaText = content?.ctaText ?? 'View My Work';
-  const ctaUrl = content?.ctaUrl ?? '/projects';
-  const heroHeadline = content?.heroHeadline ?? 'Cloud infrastructure built for scale';
-  const heroSubtext = content?.heroSubtext ?? 'DevOps engineer designing resilient systems. From concrete foundations to cloud architecture.';
+function ImageBox({ src, alt, className = '' }: { src?: string | null; alt: string; className?: string }) {
+  return (
+    <div className={`flex overflow-hidden bg-neutral-200 ${className}`}>
+      {src ? (
+        <img src={src} alt={alt} className="h-full w-full object-cover grayscale transition duration-500 group-hover:scale-105 group-hover:grayscale-0" />
+      ) : (
+        <div className="flex h-full min-h-[10rem] w-full items-center justify-center text-neutral-400">
+          <svg className="h-14 w-14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4"><path d="M3 16l4-4a2 2 0 0 1 3 0l2 2 1-1a2 2 0 0 1 3 0l5 5"/><path d="M3 5h18v14H3z"/><circle cx="8" cy="9" r="1.5"/></svg>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function InternalOrExternalLink({ href, children, className }: { href: string; children: React.ReactNode; className?: string }) {
+  if (href.startsWith('http')) {
+    return <a href={href} target="_blank" rel="noreferrer" className={className}>{children}</a>;
+  }
+  return <Link href={href} className={className}>{children}</Link>;
+}
+
+function SectionIntro({ eyebrow, title, subtitle, align = 'left' }: { eyebrow: string; title: string; subtitle: string; align?: 'left' | 'center' }) {
+  return (
+    <div className={align === 'center' ? 'mx-auto max-w-3xl text-center' : 'max-w-4xl'}>
+      <p className="text-sm font-bold tracking-tight text-black">{eyebrow}</p>
+      <h2 className="mt-6 text-4xl font-black leading-[1.05] tracking-[0.08em] text-black sm:text-5xl lg:text-6xl">{title}</h2>
+      <p className="mt-7 text-xl leading-8 text-black/80">{subtitle}</p>
+    </div>
+  );
+}
+
+function TimelineSection({ timeline, ctas, eyebrow, title, subtitle }: { timeline: HomepageTimelineItemView[]; ctas: HomepageCTAView[]; eyebrow: string; title: string; subtitle: string }) {
+  if (timeline.length === 0) return null;
+  const github = ctaFor(ctas, 'timeline', 0, { label: 'Github', url: 'https://github.com/mjules-tek' });
+  const linkedin = ctaFor(ctas, 'timeline', 1, { label: 'LinkedIn', url: 'https://www.linkedin.com/in/mjules-tek' });
 
   return (
-    <div className="mx-auto max-w-7xl px-4">
-
-      {/* ── Hero ── */}
-      <section className="relative flex min-h-[90vh] flex-col justify-center gap-12 py-16 lg:flex-row lg:items-center lg:gap-8 lg:py-24">
-
-        {/* Localised glow behind the right panel */}
-        <div className="pointer-events-none absolute right-0 top-1/2 h-[600px] w-[600px] -translate-y-1/2 rounded-full bg-cyan-500/10 blur-[120px]" />
-        <div className="pointer-events-none absolute right-1/4 top-1/4 h-[300px] w-[300px] rounded-full bg-blue-600/10 blur-[80px]" />
-
-        {/* ── LEFT ── */}
-        <div className="relative z-10 flex flex-1 flex-col gap-6 lg:max-w-[52%]">
-
-          {/* Open to work badge */}
-          <div className="flex items-center gap-2 self-start rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-1.5">
-            <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-400" />
-            <span className="text-xs font-semibold uppercase tracking-widest text-emerald-300">Open to Work</span>
-          </div>
-
-          {/* Headline */}
-          <h1 className="text-5xl font-black leading-[1.05] tracking-tight text-white sm:text-6xl xl:text-7xl">
-            {heroHeadline}
-          </h1>
-
-          {/* Sub-description */}
-          <p className="max-w-lg text-base leading-7 text-slate-400 sm:text-lg">
-            {heroSubtext}
-          </p>
-
-          {/* CTA row */}
-          <div className="flex flex-wrap items-center gap-3">
-            {/* Primary CTA */}
-            <a
-              href={ctaUrl}
-              className="group inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-cyan-400 to-blue-500 px-6 py-3 text-sm font-bold text-slate-950 shadow-[0_0_24px_rgba(103,232,249,0.35)] transition-all duration-300 hover:shadow-[0_0_36px_rgba(103,232,249,0.55)] hover:scale-[1.03]"
-            >
-              {ctaText}
-              <svg className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" /></svg>
-            </a>
-
-            {/* Let's Connect */}
-            <a
-              href="/contact"
-              className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-semibold text-white backdrop-blur-sm transition-all duration-200 hover:border-white/20 hover:bg-white/10"
-            >
-              Let&apos;s Connect
-            </a>
-
-            {/* Icon buttons */}
-            <div className="flex items-center gap-2">
-              {/* GitHub */}
-              <a
-                href="https://github.com/mjules-tek"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="GitHub"
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-sm transition-all duration-200 hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-300"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z" /></svg>
-              </a>
-
-              {/* LinkedIn */}
-              <a
-                href="https://linkedin.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-sm transition-all duration-200 hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-300"
-              >
-                <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" /></svg>
-              </a>
-
-              {/* Resume */}
-              <a
-                href="/api/resume/download"
-                aria-label="Download Resume"
-                className="flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-300 backdrop-blur-sm transition-all duration-200 hover:border-cyan-400/40 hover:bg-cyan-400/10 hover:text-cyan-300"
-              >
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m.75 12 3 3m0 0 3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9z" /></svg>
-              </a>
-            </div>
-          </div>
-
-          {/* Stats row */}
-          <div className="mt-2 grid grid-cols-4 divide-x divide-white/10 overflow-hidden rounded-2xl border border-white/10 bg-white/[.04] backdrop-blur-sm">
-            {[
-              { value: '3+',   label: 'Years Learning' },
-              { value: '15+',  label: 'Projects Built' },
-              { value: '8+',   label: 'Technologies' },
-              { value: '100%', label: 'Passion' },
-            ].map(({ value, label }) => (
-              <div key={label} className="flex flex-col items-center gap-0.5 px-3 py-4">
-                <span className="text-xl font-black text-white sm:text-2xl">{value}</span>
-                <span className="text-center text-[10px] leading-tight text-slate-500 sm:text-xs">{label}</span>
+    <section className="px-6 py-28 sm:px-10 lg:px-20">
+      <SectionIntro eyebrow={eyebrow} title={title} subtitle={subtitle} />
+      <div className="mt-10 flex flex-wrap items-center gap-6">
+        <InternalOrExternalLink href={github.url} className="border border-black px-8 py-4 text-base font-medium transition hover:bg-black hover:text-white">{github.label}</InternalOrExternalLink>
+        <InternalOrExternalLink href={linkedin.url} className="group text-base font-medium text-black underline-offset-4 hover:underline">{linkedin.label}<Arrow /></InternalOrExternalLink>
+      </div>
+      <div className="mt-28 hidden lg:block">
+        <div className="grid grid-cols-5 items-center gap-3">
+          {timeline.slice(0, 5).map((item, index) => {
+            const body = (
+              <>
+                {index % 2 === 0 && <ImageBox src={item.imageUrl} alt={item.title} className="h-44 w-full" />}
+                <div className={index % 2 === 0 ? 'mt-7' : 'mb-7'}>
+                  <h3 className="text-3xl font-black tracking-wide text-black">{item.year}</h3>
+                  <p className="mt-2 text-base font-bold text-black">{item.title}</p>
+                  <p className="mt-4 text-lg leading-7 text-black/85">{item.description}</p>
+                </div>
+                {index % 2 === 1 && <ImageBox src={item.imageUrl} alt={item.title} className="h-44 w-full" />}
+              </>
+            );
+            return (
+              <div key={item.id} className="relative min-h-[340px]">
+                <div className={index % 2 === 0 ? 'mb-6' : 'mt-40'}>
+                  {item.externalUrl ? (
+                    <InternalOrExternalLink href={item.externalUrl} className="group block focus:outline-none focus-visible:ring-2 focus-visible:ring-black">
+                      {body}
+                    </InternalOrExternalLink>
+                  ) : body}
+                </div>
+                <div className="absolute left-0 right-0 top-1/2 h-[3px] bg-black" />
+                <div className="absolute top-1/2 h-5 w-5 -translate-y-1/2 rounded-full bg-black" />
               </div>
+            );
+          })}
+        </div>
+      </div>
+      <div className="mt-16 grid gap-8 lg:hidden">
+        {timeline.map(item => {
+          const body = (
+            <>
+              <ImageBox src={item.imageUrl} alt={item.title} className="h-52" />
+              <div>
+                <p className="text-3xl font-black text-black">{item.year}</p>
+                <h3 className="mt-2 text-2xl font-black text-black">{item.title}</h3>
+                <p className="mt-3 text-lg leading-7 text-black/75">{item.description}</p>
+              </div>
+            </>
+          );
+          return item.externalUrl ? (
+            <InternalOrExternalLink key={item.id} href={item.externalUrl} className="group grid gap-5 border-l-4 border-black pl-6">{body}</InternalOrExternalLink>
+          ) : (
+            <div key={item.id} className="grid gap-5 border-l-4 border-black pl-6">{body}</div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+function ProjectCard({ project, large = false }: { project: MappedProject; large?: boolean }) {
+  const tag = project.tags[0]?.name ?? 'Case study';
+  return (
+    <Link href={`/projects/${project.slug}`} className={`group block ${large ? 'lg:col-span-2 lg:row-span-3' : ''}`}>
+      <article className="flex h-full flex-col">
+        <ImageBox src={project.coverImageUrl} alt={project.title} className={large ? 'h-[420px]' : 'h-48'} />
+        <div className="flex flex-1 flex-col pt-6">
+          <div className="flex flex-wrap items-center gap-5 text-sm font-bold text-black">
+            <span className="bg-neutral-100 px-3 py-2">{tag}</span>
+            <span>{project.readTime ?? '8 min read'}</span>
+          </div>
+          <h3 className={`${large ? 'text-3xl' : 'text-2xl'} mt-5 font-black leading-tight text-black`}>{project.title}</h3>
+          <p className="mt-4 text-base leading-7 text-black/75">{project.tagline}</p>
+          <span className="mt-auto pt-7 text-base font-medium text-black">{project.ctaLabel ?? 'View case'}<Arrow /></span>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+function ProjectsSection({ projects, eyebrow, title, subtitle }: { projects: MappedProject[]; eyebrow: string; title: string; subtitle: string }) {
+  if (projects.length === 0) return null;
+  const sorted = [...projects].sort((a, b) => (a.homepageOrder ?? 0) - (b.homepageOrder ?? 0));
+  const large = sorted.find(p => p.homepagePlacement === 'large') ?? sorted[0];
+  const side = sorted.filter(p => p.id !== large.id && p.homepagePlacement === 'side').slice(0, 3);
+  const sideFallback = sorted.filter(p => p.id !== large.id && p.homepagePlacement !== 'grid' && !side.some(item => item.id === p.id)).slice(0, Math.max(0, 3 - side.length));
+  const small = [...side, ...sideFallback].slice(0, 3);
+  const gridExplicit = sorted.filter(p => p.id !== large.id && p.homepagePlacement === 'grid' && !small.some(item => item.id === p.id));
+  const gridFallback = sorted.filter(p => p.id !== large.id && !small.some(item => item.id === p.id) && !gridExplicit.some(item => item.id === p.id));
+  const grid = [...gridExplicit, ...gridFallback];
+  return (
+    <section className="px-6 py-28 sm:px-10 lg:px-20">
+      <div className="max-w-4xl">
+        <p className="text-sm font-bold text-black">{eyebrow}</p>
+        <h2 className="mt-6 text-5xl font-black leading-tight text-black sm:text-6xl">{title}</h2>
+        <p className="mt-7 text-xl leading-8 text-black/80">{subtitle}</p>
+      </div>
+      <div className="mt-16 grid gap-8 lg:grid-cols-[1.25fr_1fr]">
+        <ProjectCard project={large} large />
+        <div className="grid gap-8">
+          {small.map(project => <ProjectCard key={project.id} project={project} />)}
+        </div>
+      </div>
+      {grid.length > 0 && (
+        <div className="mt-24">
+          <h3 className="text-2xl font-black text-black">Production infrastructure work</h3>
+          <div className="mt-10 grid gap-x-8 gap-y-16 md:grid-cols-2 lg:grid-cols-3">
+            {grid.map(project => <ProjectCard key={project.id} project={project} />)}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function StackIcon({ item }: { item: HomepageStackItemView }) {
+  const iconUrl = assetUrlFromKey(item.iconKey);
+  if (iconUrl) return <img src={iconUrl} alt="" className="mx-auto h-12 w-12 object-contain grayscale" />;
+  return <svg className="mx-auto h-12 w-12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M4 14c3-6 7-6 10 0s5 6 6 0"/><path d="M4 10c3 6 7 6 10 0s5-6 6 0"/></svg>;
+}
+
+function StackSection({ stack, ctas, eyebrow, title, subtitle }: { stack: HomepageStackItemView[]; ctas: HomepageCTAView[]; eyebrow: string; title: string; subtitle: string }) {
+  if (stack.length === 0) return null;
+  const explore = ctaFor(ctas, 'stack', 0, { label: 'Explore', url: '/projects' });
+  const github = ctaFor(ctas, 'stack', 1, { label: 'GitHub', url: 'https://github.com/mjules-tek' });
+  return (
+    <section className="px-6 py-32 text-center sm:px-10 lg:px-20">
+      <SectionIntro eyebrow={eyebrow} title={title} subtitle={subtitle} align="center" />
+      <div className="mt-24 grid gap-x-10 gap-y-20 md:grid-cols-2 xl:grid-cols-4">
+        {stack.map(item => (
+          <a key={item.id} href={item.externalUrl ?? '#'} className="group block">
+            <StackIcon item={item} />
+            <h3 className="mt-8 text-3xl font-black leading-tight text-black">{item.title}</h3>
+            <p className="mt-7 text-lg leading-8 text-black/75">{item.description}</p>
+          </a>
+        ))}
+      </div>
+      <div className="mt-24 flex flex-wrap justify-center gap-7">
+        <InternalOrExternalLink href={explore.url} className="border border-black px-8 py-4 text-base font-medium transition hover:bg-black hover:text-white">{explore.label}</InternalOrExternalLink>
+        <InternalOrExternalLink href={github.url} className="group px-3 py-4 text-base font-medium text-black">{github.label}<Arrow /></InternalOrExternalLink>
+      </div>
+    </section>
+  );
+}
+
+function DynamicFooter({ footer, navLinks, legalLinks, socials }: { footer: FooterSettingsView; navLinks: SimpleLink[]; legalLinks: SimpleLink[]; socials: SimpleLink[] }) {
+  const columns = Array.from(new Set(navLinks.map(link => link.column ?? 'Links')));
+  return (
+    <footer className="px-6 pb-16 pt-20 sm:px-10 lg:px-20">
+      <div className="grid gap-16 border border-black p-12 md:grid-cols-[1.2fr_1fr] lg:grid-cols-[1.4fr_1fr_1fr]">
+        <div>
+          <p className="font-serif text-4xl italic text-black">{footer.logoText}</p>
+          <div className="mt-12 space-y-8 text-lg text-black">
+            <div><p className="font-bold">Location</p><p className="mt-2">{footer.location}</p></div>
+            <div><p className="font-bold">Email</p><a href={`mailto:${footer.email}`} className="mt-2 block underline">{footer.email}</a>{footer.linkedInUrl && <a href={footer.linkedInUrl} target="_blank" rel="noreferrer" className="mt-1 block underline">{footer.linkedInUrl.replace(/^https?:\/\//, '')}</a>}</div>
+          </div>
+          <div className="mt-12 flex flex-wrap items-center gap-5">
+            {socials.map((link: SimpleLink) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-bold underline-offset-4 hover:underline">
+                {link.iconUrl ? <img src={link.iconUrl} alt="" className="h-5 w-5 object-contain grayscale" /> : null}
+                <span>{link.platform ?? link.label}</span>
+              </a>
             ))}
           </div>
         </div>
-
-        {/* ── RIGHT ── */}
-        <div className="relative z-10 flex flex-1 items-center justify-center lg:justify-end">
-          <div className="relative h-[420px] w-[340px] sm:h-[480px] sm:w-[400px]">
-
-            {/* Profile card — main */}
-            <div className="absolute inset-0 overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-slate-800/60 to-slate-900/80 shadow-[0_0_60px_rgba(0,0,0,0.6)] backdrop-blur-xl">
-              {/* Placeholder profile image area with gradient overlay */}
-              <div className="h-full w-full bg-gradient-to-br from-slate-700/40 via-slate-800/60 to-slate-900/80">
-                {/* Subtle grid texture */}
-                <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(148,163,184,.04)_1px,transparent_1px),linear-gradient(to_bottom,rgba(148,163,184,.04)_1px,transparent_1px)] bg-[size:32px_32px]" />
-                {/* Cyan glow at top */}
-                <div className="absolute left-1/2 top-0 h-40 w-40 -translate-x-1/2 rounded-full bg-cyan-400/20 blur-3xl" />
-              </div>
-
-              {/* Name tag overlay at bottom */}
-              <div className="absolute bottom-0 left-0 right-0 border-t border-white/10 bg-slate-900/80 px-5 py-4 backdrop-blur-sm">
-                <p className="text-lg font-black text-white">Jules Munyaneza</p>
-                <p className="text-sm text-cyan-300">Cloud &amp; DevOps Engineer</p>
-              </div>
+        {columns.map(column => (
+          <div key={column}>
+            <p className="text-lg font-bold text-black">{column}</p>
+            <div className="mt-8 grid gap-6">
+              {navLinks.filter(link => (link.column ?? 'Links') === column).map(link => <InternalOrExternalLink key={link.id} href={link.url} className="text-lg font-semibold text-black hover:underline">{link.label}</InternalOrExternalLink>)}
             </div>
+          </div>
+        ))}
+      </div>
+      <div className="mt-12 flex flex-col gap-8 text-lg text-black md:flex-row md:items-center md:justify-between">
+        <p>{footer.copyrightText}</p>
+        <div className="flex flex-wrap gap-8">
+          {legalLinks.map((link: { id: string; label: string; url: string; order: number }) => <InternalOrExternalLink key={link.id} href={link.url} className="underline">{link.label}</InternalOrExternalLink>)}
+        </div>
+      </div>
+    </footer>
+  );
+}
 
-            {/* Floating card — Deployment Pipeline (top-right) */}
-            <div className="absolute -right-4 top-6 w-52 animate-[float_6s_ease-in-out_infinite] rounded-2xl border border-white/10 bg-slate-900/90 p-3.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:-right-8">
-              <p className="mb-2.5 text-[11px] font-bold uppercase tracking-widest text-slate-400">Deployment Pipeline</p>
-              {[
-                { step: 'Code Commit',        done: true  },
-                { step: 'Build & Test',       done: true  },
-                { step: 'Security Scan',      done: true  },
-                { step: 'Deploy to Staging',  done: true  },
-                { step: 'Deploy to Production', done: false },
-              ].map(({ step, done }) => (
-                <div key={step} className="flex items-center justify-between py-[3px]">
-                  <span className={`text-[11px] ${done ? 'text-slate-300' : 'text-slate-500'}`}>{step}</span>
-                  {done
-                    ? <svg className="h-3.5 w-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" /></svg>
-                    : <span className="h-2 w-2 animate-pulse rounded-full bg-cyan-400" />
-                  }
-                </div>
-              ))}
-            </div>
+export default async function Home() {
+  const data = await getHomepageData();
+  const heroHeadline = data.content?.heroHeadline ?? 'Infrastructure that scales from idea to production';
+  const heroSubtext = data.content?.heroSubtext ?? 'Cloud, DevOps, deployment systems, and infrastructure stories built for reliability.';
+  const heroImageUrl = data.content?.heroImageUrl ?? assetUrlFromKey(data.content?.heroImageKey);
+  const primaryCta = { label: data.content?.ctaText ?? 'View projects', url: data.content?.ctaUrl ?? '/projects' };
 
-            {/* Floating card — Terminal snippet (left, middle) */}
-            <div className="absolute -left-4 top-1/3 w-48 animate-[float_8s_ease-in-out_1s_infinite] rounded-2xl border border-white/10 bg-slate-950/95 p-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl sm:-left-10">
-              <div className="mb-2 flex items-center gap-1.5">
-                <span className="h-2 w-2 rounded-full bg-rose-400" />
-                <span className="h-2 w-2 rounded-full bg-amber-400" />
-                <span className="h-2 w-2 rounded-full bg-emerald-400" />
-              </div>
-              <div className="space-y-1 font-mono text-[10px] leading-relaxed">
-                <p><span className="text-cyan-400">jules@cloud</span><span className="text-slate-500">:~$</span></p>
-                <p className="text-slate-300">deploy <span className="text-cyan-300">--env</span></p>
-                <p className="text-slate-300 pl-2">production</p>
-                <p className="text-slate-500">Building infra...</p>
-                <p className="text-slate-500">Provisioning...</p>
-                <p className="text-emerald-400">✓ Deployed!</p>
-              </div>
-            </div>
-
-            {/* Floating card — Cloud icon panel (bottom-left) */}
-            <div className="absolute -bottom-4 -left-4 animate-[float_7s_ease-in-out_2s_infinite] rounded-2xl border border-cyan-400/20 bg-slate-900/90 p-3 shadow-[0_0_24px_rgba(103,232,249,0.12)] backdrop-blur-xl sm:-left-8">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cyan-400/10">
-                  {/* Cloud upload icon */}
-                  <svg className="h-5 w-5 text-cyan-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75z" /></svg>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-white">AWS Deploy</p>
-                  <p className="text-[10px] text-emerald-400">● Live</p>
-                </div>
-              </div>
-            </div>
-
+  return (
+    <div className="relative z-10 bg-white text-black">
+      <section className="grid min-h-[86vh] items-center gap-12 px-6 py-24 sm:px-10 lg:grid-cols-[1.05fr_.95fr] lg:px-20">
+        <div className="max-w-5xl">
+          <p className="text-sm font-black uppercase tracking-[0.28em]">Cloud infrastructure portfolio</p>
+          <h1 className="mt-8 text-6xl font-black leading-[0.95] tracking-tight text-black sm:text-7xl lg:text-8xl">{heroHeadline}</h1>
+          <p className="mt-8 max-w-3xl text-2xl leading-10 text-black/75">{heroSubtext}</p>
+          <div className="mt-12 flex flex-wrap gap-6">
+            <InternalOrExternalLink href={primaryCta.url} className="border border-black px-8 py-4 text-base font-semibold transition hover:bg-black hover:text-white">{primaryCta.label}</InternalOrExternalLink>
+            <Link href="/contact" className="group px-3 py-4 text-base font-semibold text-black">Contact<Arrow /></Link>
+          </div>
+        </div>
+        <div className="group relative mx-auto w-full max-w-xl">
+          <ImageBox src={heroImageUrl} alt={heroHeadline} className="h-[520px] border border-black/10" />
+          <div className="absolute -bottom-8 -left-8 border border-black bg-white p-6 shadow-[12px_12px_0_#000]">
+            <p className="text-sm font-bold uppercase tracking-[0.2em]">Production ready</p>
+            <p className="mt-3 text-2xl font-black">DevOps systems, CMS builds, and cloud delivery.</p>
           </div>
         </div>
       </section>
 
-      {/* ── Featured Projects — unchanged ── */}
-      {featuredProjects.length > 0 && (
-        <section className="mt-8 grid gap-5 pb-16 md:grid-cols-3">
-          {featuredProjects.map(p => (
-            <Card key={p.id} className="overflow-hidden">
-              {p.coverImageUrl && (
-                <img src={p.coverImageUrl} alt={p.title} className="mb-4 h-44 w-full rounded-2xl object-cover" />
-              )}
-              <h2 className="text-2xl font-black text-white">{p.title}</h2>
-              <p className="mt-2 text-slate-400">{p.tagline}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {p.tags.map((t: { id: string; name: string; slug: string }) => (
-                  <Badge key={t.id}>{t.name}</Badge>
-                ))}
-              </div>
-              <div className="mt-4">
-                <Button href={`/projects/${p.slug}`} variant="secondary">Read case study</Button>
-              </div>
-            </Card>
-          ))}
-        </section>
-      )}
+      <TimelineSection timeline={data.timeline} ctas={data.ctas} eyebrow={data.content?.timelineEyebrow ?? 'Timeline'} title={data.content?.timelineTitle ?? 'Experience and certifications'} subtitle={data.content?.timelineSubtitle ?? 'Years of building, learning, and shipping infrastructure that matters.'} />
+      <WritingSection posts={data.posts} categories={data.blogCategories} eyebrow={data.content?.writingEyebrow ?? 'Writing'} title={data.content?.writingTitle ?? 'Knowledge worth sharing'} subtitle={data.content?.writingSubtitle ?? 'Technical insights from the field.'} />
+      <ProjectsSection projects={data.projects} eyebrow={data.content?.projectsEyebrow ?? 'Projects'} title={data.content?.projectsTitle ?? 'Work that scales'} subtitle={data.content?.projectsSubtitle ?? 'Infrastructure built for production demands.'} />
+      <StackSection stack={data.stack} ctas={data.ctas} eyebrow={data.content?.stackEyebrow ?? 'Stack'} title={data.content?.stackTitle ?? 'Tools that power production infrastructure'} subtitle={data.content?.stackSubtitle ?? 'Built with technologies that handle real scale. Each tool chosen for reliability, not hype. The stack that runs the internet.'} />
+      <DynamicFooter footer={data.footer} navLinks={data.footerNav} legalLinks={data.legalLinks} socials={data.socials} />
     </div>
   );
 }

@@ -1,11 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-:root { color-scheme: dark; }
-html { scroll-behavior: smooth; }
-body { background:#050814; color:#f8fafc; }
+
+:root { color-scheme: light dark; }
+html { scroll-behavior: smooth; overflow-x: hidden; }
+body { margin: 0; overflow-x: hidden; background:#ffffff; color:#0a0a0a; }
 * { box-sizing:border-box; }
-::selection { background:rgba(103,232,249,.3); }
+img, video, canvas, svg { max-width: 100%; }
+::selection { background:rgba(0,0,0,.12); }
+
+.nav { border-radius: 999px; padding: .5rem .75rem; font-size: .95rem; color: rgb(15 23 42); transition: background .2s, color .2s; }
+.dark .nav { color: rgb(226 232 240); }
+.nav:hover { background: rgba(0,0,0,.06); }
+.dark .nav:hover { background: rgba(255,255,255,.08); color: white; }
 
 @keyframes float {
   0%, 100% { transform: translateY(0px); }

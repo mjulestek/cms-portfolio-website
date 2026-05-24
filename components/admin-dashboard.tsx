@@ -7,29 +7,45 @@ type View =
   | 'overview'
   | 'projects'
   | 'blog'
+  | 'blogCategories'
   | 'media'
   | 'videos'
   | 'resume'
   | 'skills'
   | 'testimonials'
   | 'homepage'
+  | 'timeline'
+  | 'stack'
+  | 'footer'
+  | 'footerNav'
+  | 'legal'
+  | 'ctas'
   | 'messages'
   | 'settings';
 
-const nav: View[] = ['overview', 'projects', 'blog', 'media', 'videos', 'resume', 'skills', 'testimonials', 'homepage', 'messages', 'settings'];
+const nav: View[] = ['overview', 'projects', 'blog', 'blogCategories', 'media', 'videos', 'resume', 'skills', 'testimonials', 'homepage', 'timeline', 'stack', 'ctas', 'footer', 'footerNav', 'legal', 'messages', 'settings'];
 const routeViews: Record<string, View> = {
   '/admin/dashboard': 'overview',
   '/admin/projects': 'projects',
   '/admin/blog': 'blog',
+  '/admin/blog-categories': 'blogCategories',
   '/admin/media': 'media',
   '/admin/videos': 'videos',
   '/admin/resume': 'resume',
   '/admin/skills': 'skills',
   '/admin/testimonials': 'testimonials',
   '/admin/homepage': 'homepage',
+  '/admin/timeline': 'timeline',
+  '/admin/stack': 'stack',
+  '/admin/ctas': 'ctas',
+  '/admin/footer': 'footer',
+  '/admin/footer-navigation': 'footerNav',
+  '/admin/legal': 'legal',
   '/admin/contact-messages': 'messages',
   '/admin/settings': 'settings',
 };
+
+const viewLabel = (view: View) => ({ messages: 'contact messages', footerNav: 'footer navigation', ctas: 'CTA links', blogCategories: 'blog categories' } as Partial<Record<View, string>>)[view] ?? view;
 
 type ApiRecord = Record<string, unknown> & { id?: string; title?: string; name?: string; slug?: string; status?: string; platform?: string; subject?: string };
 type Feedback = { type: 'success' | 'error'; message: string } | null;
@@ -176,21 +192,28 @@ export function AdminDashboard() {
             onClick={() => { setView(v); const path = Object.entries(routeViews).find(([, viewName]) => viewName === v)?.[0]; if (path && typeof window !== 'undefined') window.history.pushState(null, '', path); }}
             className={`mb-1 block w-full rounded-2xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${view === v ? 'bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30' : 'text-slate-300 hover:bg-white/[.07] hover:text-white'}`}
           >
-            {v === 'messages' ? 'contact messages' : v}
+            {viewLabel(v)}
           </button>
         ))}
       </aside>
       <section className="min-w-0 overflow-hidden">
-        <Header title={view === 'messages' ? 'contact messages' : view} />
+        <Header title={viewLabel(view)} />
         {view === 'overview' && <Overview />}
         {view === 'projects' && <ProjectManager />}
         {view === 'blog' && <BlogManager />}
+        {view === 'blogCategories' && <BlogCategoryManager />}
         {view === 'media' && <MediaManager />}
         {view === 'videos' && <VideoManager />}
         {view === 'resume' && <ResumeManager />}
         {view === 'skills' && <SkillManager />}
         {view === 'testimonials' && <TestimonialManager />}
         {view === 'homepage' && <HomepageManager />}
+        {view === 'timeline' && <TimelineManager />}
+        {view === 'stack' && <StackManager />}
+        {view === 'ctas' && <CtaManager />}
+        {view === 'footer' && <FooterSettingsManager />}
+        {view === 'footerNav' && <FooterNavManager />}
+        {view === 'legal' && <LegalLinksManager />}
         {view === 'messages' && <ContactMessagesManager />}
         {view === 'settings' && <SocialLinksManager />}
       </section>
@@ -350,6 +373,11 @@ function ProjectForm({ record, mode }: { record: ApiRecord; mode: 'create' | 'ed
       <Field label="Tagline" name="tagline" value={record.tagline} required />
       <SelectField label="Status" name="status" value={record.status} options={['DRAFT', 'PUBLISHED', 'ARCHIVED']} />
       <CheckField label="Featured" name="featured" value={record.featured} />
+      <CheckField label="Show on homepage" name="homepageVisible" value={record.homepageVisible ?? true} />
+      <Field label="Homepage order" name="homepageOrder" value={record.homepageOrder} type="number" />
+      <SelectField label="Homepage placement" name="homepagePlacement" value={record.homepagePlacement} options={['grid', 'large', 'side']} />
+      <Field label="Read time" name="readTime" value={record.readTime} />
+      <Field label="CTA label" name="ctaLabel" value={record.ctaLabel} />
       <TextArea label="Story" name="story" value={record.story} required />
       <TextArea label="Challenge" name="challenge" value={record.challenge} required />
       <TextArea label="Solution" name="solution" value={record.solution} required />
@@ -389,6 +417,11 @@ function projectPayload(form: FormData, mode: 'create' | 'edit') {
     tagline: String(form.get('tagline') ?? ''),
     status: String(form.get('status') ?? 'DRAFT'),
     featured: parseBoolean(form.get('featured')),
+    homepageVisible: parseBoolean(form.get('homepageVisible'), true),
+    homepageOrder: parseNumber(form.get('homepageOrder')),
+    homepagePlacement: optionalString(form.get('homepagePlacement')),
+    readTime: optionalString(form.get('readTime')),
+    ctaLabel: optionalString(form.get('ctaLabel')),
     story: String(form.get('story') ?? ''),
     challenge: String(form.get('challenge') ?? ''),
     solution: String(form.get('solution') ?? ''),
@@ -431,7 +464,12 @@ function BlogForm({ record, mode }: { record: ApiRecord; mode: 'create' | 'edit'
       <TextArea label="Excerpt" name="excerpt" value={record.excerpt} required rows={3} />
       <TextArea label="Body" name="body" value={record.body} required rows={8} />
       <SelectField label="Status" name="status" value={record.status} options={['DRAFT', 'PUBLISHED', 'ARCHIVED']} />
+      <BlogCategorySelect name="categoryId" value={record.categoryId ?? (record.category as ApiRecord | undefined)?.id} />
       <CheckField label="Featured" name="featured" value={record.featured} />
+      <CheckField label="Show on homepage" name="homepageVisible" value={record.homepageVisible ?? true} />
+      <Field label="Homepage order" name="homepageOrder" value={record.homepageOrder} type="number" />
+      <Field label="Read time" name="readTime" value={record.readTime} />
+      <Field label="CTA label" name="ctaLabel" value={record.ctaLabel} />
       <MediaPicker label="Cover image" name="coverImageKey" value={record.coverImageKey} accept="image/*" defaultFolder="images/blog" usedIn="blog-cover" />
       <TagSelector name="tagIds" value={tagIds} />
       <VideoSelector name="videoIds" value={videoIds} />
@@ -446,6 +484,11 @@ function blogPayload(form: FormData, mode: 'create' | 'edit') {
     body: String(form.get('body') ?? ''),
     status: String(form.get('status') ?? 'DRAFT'),
     featured: parseBoolean(form.get('featured')),
+    homepageVisible: parseBoolean(form.get('homepageVisible'), true),
+    homepageOrder: parseNumber(form.get('homepageOrder')),
+    categoryId: optionalString(form.get('categoryId')),
+    readTime: optionalString(form.get('readTime')),
+    ctaLabel: optionalString(form.get('ctaLabel')),
     coverImageKey: optionalString(form.get('coverImageKey')),
     tagIds: parseCsv(form.get('tagIds')),
     videoIds: parseCsv(form.get('videoIds')),
@@ -453,6 +496,79 @@ function blogPayload(form: FormData, mode: 'create' | 'edit') {
   if (mode === 'create') payload.slug = String(form.get('slug') ?? '');
   else if (String(form.get('slug') ?? '').trim()) payload.slug = String(form.get('slug'));
   return payload;
+}
+
+
+function BlogCategoryManager() {
+  return (
+    <CrudManager
+      title="Blog categories"
+      endpoint="/api/admin/blog-categories"
+      listKey="categories"
+      itemKey="category"
+      empty={{ visible: true, order: 0 }}
+      renderForm={record => <BlogCategoryForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['slug', 'visible', 'order']} />}
+    />
+  );
+}
+
+function BlogCategoryForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <Field label="Name" name="name" value={record.name} required />
+      <Field label="Slug" name="slug" value={record.slug} required />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Visible" name="visible" value={record.visible ?? true} />
+    </>
+  );
+}
+
+function blogCategoryPayload(form: FormData) {
+  return {
+    name: String(form.get('name') ?? ''),
+    slug: String(form.get('slug') ?? ''),
+    order: parseNumber(form.get('order')),
+    visible: parseBoolean(form.get('visible'), true),
+  };
+}
+
+function BlogCategorySelect({ name, value }: { name: string; value?: unknown }) {
+  const [categories, setCategories] = useState<ApiRecord[]>([]);
+  const [selected, setSelected] = useState(textValue(value));
+  const [feedback, setFeedback] = useState<Feedback>(null);
+
+  useEffect(() => {
+    setSelected(textValue(value));
+  }, [value]);
+
+  useEffect(() => {
+    let mounted = true;
+    api<{ categories: ApiRecord[] }>('/api/admin/blog-categories')
+      .then(data => mounted && setCategories(data.categories ?? []))
+      .catch(error => mounted && setFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Could not load blog categories' }));
+    return () => { mounted = false; };
+  }, []);
+
+  return (
+    <div className="grid gap-2 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+      <label className="grid gap-1 text-sm text-slate-300">
+        Blog category
+        <select
+          name={name}
+          value={selected}
+          onChange={event => setSelected(event.target.value)}
+          className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+        >
+          <option value="">No category</option>
+          {categories.map(category => (
+            <option key={String(category.id)} value={String(category.id)}>{textValue(category.name)}</option>
+          ))}
+        </select>
+      </label>
+      <Status loading={false} feedback={feedback} />
+    </div>
+  );
 }
 
 function MediaPicker({
@@ -1121,12 +1237,25 @@ function HomepageManager() {
       const payload = {
         heroHeadline: String(form.get('heroHeadline') ?? ''),
         heroSubtext: String(form.get('heroSubtext') ?? ''),
+        heroImageKey: optionalString(form.get('heroImageKey')),
         ctaText: String(form.get('ctaText') ?? ''),
         ctaUrl: String(form.get('ctaUrl') ?? ''),
         aboutText: String(form.get('aboutText') ?? ''),
         metaTitle: String(form.get('metaTitle') ?? ''),
         metaDescription: String(form.get('metaDescription') ?? ''),
         featuredVideoId: optionalString(form.get('featuredVideoId')),
+        timelineEyebrow: optionalString(form.get('timelineEyebrow')),
+        timelineTitle: optionalString(form.get('timelineTitle')),
+        timelineSubtitle: optionalString(form.get('timelineSubtitle')),
+        writingEyebrow: optionalString(form.get('writingEyebrow')),
+        writingTitle: optionalString(form.get('writingTitle')),
+        writingSubtitle: optionalString(form.get('writingSubtitle')),
+        projectsEyebrow: optionalString(form.get('projectsEyebrow')),
+        projectsTitle: optionalString(form.get('projectsTitle')),
+        projectsSubtitle: optionalString(form.get('projectsSubtitle')),
+        stackEyebrow: optionalString(form.get('stackEyebrow')),
+        stackTitle: optionalString(form.get('stackTitle')),
+        stackSubtitle: optionalString(form.get('stackSubtitle')),
       };
       const data = await api<{ content: ApiRecord }>('/api/admin/homepage', { method: 'PUT', body: JSON.stringify(payload) });
       setContent(data.content);
@@ -1144,11 +1273,27 @@ function HomepageManager() {
         <form onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="grid min-w-0 gap-4">
           <Field label="Hero headline" name="heroHeadline" value={record.heroHeadline} required />
           <TextArea label="Hero subtext" name="heroSubtext" value={record.heroSubtext} required />
+          <MediaPicker label="Hero image" name="heroImageKey" value={record.heroImageKey} accept="image/*" defaultFolder="images/homepage" usedIn="homepage-hero" />
           <Field label="CTA text" name="ctaText" value={record.ctaText} required />
           <Field label="CTA URL" name="ctaUrl" value={record.ctaUrl} required />
           <TextArea label="About text" name="aboutText" value={record.aboutText} required />
           <Field label="Meta title" name="metaTitle" value={record.metaTitle} required />
           <TextArea label="Meta description" name="metaDescription" value={record.metaDescription} required rows={3} />
+          <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/[.03] p-4">
+            <h3 className="text-lg font-black text-white">Homepage section headings</h3>
+            <Field label="Timeline eyebrow" name="timelineEyebrow" value={record.timelineEyebrow} />
+            <Field label="Timeline title" name="timelineTitle" value={record.timelineTitle} />
+            <TextArea label="Timeline subtitle" name="timelineSubtitle" value={record.timelineSubtitle} rows={2} />
+            <Field label="Writing eyebrow" name="writingEyebrow" value={record.writingEyebrow} />
+            <Field label="Writing title" name="writingTitle" value={record.writingTitle} />
+            <TextArea label="Writing subtitle" name="writingSubtitle" value={record.writingSubtitle} rows={2} />
+            <Field label="Projects eyebrow" name="projectsEyebrow" value={record.projectsEyebrow} />
+            <Field label="Projects title" name="projectsTitle" value={record.projectsTitle} />
+            <TextArea label="Projects subtitle" name="projectsSubtitle" value={record.projectsSubtitle} rows={2} />
+            <Field label="Stack eyebrow" name="stackEyebrow" value={record.stackEyebrow} />
+            <Field label="Stack title" name="stackTitle" value={record.stackTitle} />
+            <TextArea label="Stack subtitle" name="stackSubtitle" value={record.stackSubtitle} rows={2} />
+          </div>
           <VideoSelector name="featuredVideoId" value={record.featuredVideoId} multiple={false} />
           <ActionButton type="submit">Save homepage</ActionButton>
         </form>
@@ -1221,6 +1366,228 @@ function ContactMessagesManager() {
       ))}
     </div>
   );
+}
+
+
+function TimelineManager() {
+  return (
+    <CrudManager
+      title="Timeline items"
+      endpoint="/api/admin/homepage-timeline"
+      listKey="timelineItems"
+      itemKey="timelineItem"
+      empty={{ year: '2026', active: true, order: 0 }}
+      renderForm={record => <TimelineForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['year', 'description', 'active', 'order']} />}
+    />
+  );
+}
+
+function TimelineForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <Field label="Year" name="year" value={record.year} required />
+      <Field label="Title" name="title" value={record.title} required />
+      <TextArea label="Description" name="description" value={record.description} required rows={4} />
+      <MediaPicker label="Optional image" name="imageKey" value={record.imageKey} accept="image/*" defaultFolder="images/timeline" usedIn="timeline" />
+      <Field label="External URL" name="externalUrl" value={record.externalUrl} />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Active" name="active" value={record.active ?? true} />
+    </>
+  );
+}
+
+function timelinePayload(form: FormData) {
+  return {
+    year: String(form.get('year') ?? ''),
+    title: String(form.get('title') ?? ''),
+    description: String(form.get('description') ?? ''),
+    imageKey: optionalString(form.get('imageKey')),
+    externalUrl: optionalString(form.get('externalUrl')),
+    order: parseNumber(form.get('order')),
+    active: parseBoolean(form.get('active')),
+  };
+}
+
+function StackManager() {
+  return (
+    <CrudManager
+      title="Stack tools"
+      endpoint="/api/admin/homepage-stack"
+      listKey="stackItems"
+      itemKey="stackItem"
+      empty={{ active: true, order: 0 }}
+      renderForm={record => <StackForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['category', 'description', 'active', 'order']} />}
+    />
+  );
+}
+
+function StackForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <Field label="Title" name="title" value={record.title} required />
+      <TextArea label="Description" name="description" value={record.description} required rows={4} />
+      <Field label="Category" name="category" value={record.category} required />
+      <MediaPicker label="Icon" name="iconKey" value={record.iconKey} accept="image/*" defaultFolder="icons" usedIn="stack-icon" />
+      <Field label="External URL" name="externalUrl" value={record.externalUrl} />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Active" name="active" value={record.active ?? true} />
+    </>
+  );
+}
+
+function stackPayload(form: FormData) {
+  return {
+    title: String(form.get('title') ?? ''),
+    description: String(form.get('description') ?? ''),
+    category: String(form.get('category') ?? ''),
+    iconKey: optionalString(form.get('iconKey')),
+    externalUrl: optionalString(form.get('externalUrl')),
+    order: parseNumber(form.get('order')),
+    active: parseBoolean(form.get('active')),
+  };
+}
+
+function CtaManager() {
+  return (
+    <CrudManager
+      title="Homepage CTA links"
+      endpoint="/api/admin/homepage-ctas"
+      listKey="ctas"
+      itemKey="cta"
+      empty={{ section: 'timeline', visible: true, order: 0 }}
+      renderForm={record => <CtaForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['section', 'url', 'visible', 'order']} />}
+    />
+  );
+}
+
+function CtaForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <SelectField label="Section" name="section" value={record.section} options={['timeline', 'stack', 'hero']} />
+      <Field label="Label" name="label" value={record.label} required />
+      <Field label="URL" name="url" value={record.url} required />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Visible" name="visible" value={record.visible ?? true} />
+    </>
+  );
+}
+
+function ctaPayload(form: FormData) {
+  return { section: String(form.get('section') ?? ''), label: String(form.get('label') ?? ''), url: String(form.get('url') ?? ''), order: parseNumber(form.get('order')), visible: parseBoolean(form.get('visible')) };
+}
+
+function FooterSettingsManager() {
+  const [settings, setSettings] = useState<ApiRecord | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [feedback, setFeedback] = useState<Feedback>(null);
+
+  async function load() {
+    setLoading(true);
+    try {
+      const data = await api<{ settings: ApiRecord }>('/api/admin/footer-settings');
+      setSettings(data.settings);
+    } catch (error) {
+      setFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Could not load footer settings' });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  async function submit(form: FormData) {
+    try {
+      const payload = footerSettingsPayload(form);
+      const data = await api<{ settings: ApiRecord }>('/api/admin/footer-settings', { method: 'PUT', body: JSON.stringify(payload) });
+      setSettings(data.settings);
+      setFeedback({ type: 'success', message: 'Footer settings saved.' });
+    } catch (error) {
+      setFeedback({ type: 'error', message: error instanceof Error ? error.message : 'Could not save footer settings' });
+    }
+  }
+
+  const record = settings ?? {};
+  return (
+    <div className="grid gap-5">
+      <Status loading={loading} feedback={feedback} />
+      <Card className="max-w-3xl">
+        <form onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="grid gap-4">
+          <Field label="Logo text" name="logoText" value={record.logoText} required />
+          <Field label="Location" name="location" value={record.location} required />
+          <Field label="Email" name="email" value={record.email} required />
+          <Field label="LinkedIn URL" name="linkedInUrl" value={record.linkedInUrl} />
+          <TextArea label="Copyright text" name="copyrightText" value={record.copyrightText} required rows={3} />
+          <ActionButton type="submit">Save footer settings</ActionButton>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
+function footerSettingsPayload(form: FormData) {
+  return { logoText: String(form.get('logoText') ?? ''), location: String(form.get('location') ?? ''), email: String(form.get('email') ?? ''), linkedInUrl: optionalString(form.get('linkedInUrl')), copyrightText: String(form.get('copyrightText') ?? '') };
+}
+
+function FooterNavManager() {
+  return (
+    <CrudManager
+      title="Footer navigation"
+      endpoint="/api/admin/footer-navigation"
+      listKey="links"
+      itemKey="link"
+      empty={{ column: 'Work', visible: true, order: 0 }}
+      renderForm={record => <FooterNavForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['column', 'url', 'visible', 'order']} />}
+    />
+  );
+}
+
+function FooterNavForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <Field label="Column" name="column" value={record.column} required />
+      <Field label="Label" name="label" value={record.label} required />
+      <Field label="URL" name="url" value={record.url} required />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Visible" name="visible" value={record.visible ?? true} />
+    </>
+  );
+}
+
+function footerNavPayload(form: FormData) {
+  return { column: String(form.get('column') ?? ''), label: String(form.get('label') ?? ''), url: String(form.get('url') ?? ''), order: parseNumber(form.get('order')), visible: parseBoolean(form.get('visible')) };
+}
+
+function LegalLinksManager() {
+  return (
+    <CrudManager
+      title="Legal links"
+      endpoint="/api/admin/legal-links"
+      listKey="links"
+      itemKey="link"
+      empty={{ visible: true, order: 0 }}
+      renderForm={record => <LegalLinkForm record={record} />}
+      renderSummary={record => <RecordSummary record={record} fields={['url', 'visible', 'order']} />}
+    />
+  );
+}
+
+function LegalLinkForm({ record }: { record: ApiRecord }) {
+  return (
+    <>
+      <Field label="Label" name="label" value={record.label} required />
+      <Field label="URL" name="url" value={record.url} required />
+      <Field label="Order" name="order" value={record.order} type="number" />
+      <CheckField label="Visible" name="visible" value={record.visible ?? true} />
+    </>
+  );
+}
+
+function legalLinkPayload(form: FormData) {
+  return { label: String(form.get('label') ?? ''), url: String(form.get('url') ?? ''), order: parseNumber(form.get('order')), visible: parseBoolean(form.get('visible')) };
 }
 
 function SocialLinksManager() {
@@ -1374,11 +1741,17 @@ function RecordSummary({ record, fields }: { record: ApiRecord; fields: string[]
 function payloadFor(endpoint: string, form: FormData, mode: 'create' | 'edit') {
   if (endpoint.endsWith('/projects')) return projectPayload(form, mode);
   if (endpoint.endsWith('/blog')) return blogPayload(form, mode);
+  if (endpoint.endsWith('/blog-categories')) return blogCategoryPayload(form);
   if (endpoint.endsWith('/media')) return mediaPayload(form);
   if (endpoint.endsWith('/videos')) return videoPayload(form);
   if (endpoint.endsWith('/resume')) return resumePayload(form);
   if (endpoint.endsWith('/skills')) return skillPayload(form);
   if (endpoint.endsWith('/testimonials')) return testimonialPayload(form);
   if (endpoint.endsWith('/social-links')) return socialLinkPayload(form);
+  if (endpoint.endsWith('/homepage-timeline')) return timelinePayload(form);
+  if (endpoint.endsWith('/homepage-stack')) return stackPayload(form);
+  if (endpoint.endsWith('/homepage-ctas')) return ctaPayload(form);
+  if (endpoint.endsWith('/footer-navigation')) return footerNavPayload(form);
+  if (endpoint.endsWith('/legal-links')) return legalLinkPayload(form);
   return Object.fromEntries(form.entries());
 }

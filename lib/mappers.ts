@@ -23,12 +23,29 @@ type SkillRecord = {
   iconKey?: string | null;
   proficiency: number;
   order: number;
+  resolvedIconKey?: string | null;
 };
 
 type TagRecord = {
   id: string;
   name: string;
   slug: string;
+};
+
+type BlogCategoryRecord = {
+  id: string;
+  name: string;
+  slug: string;
+  order: number;
+  visible: boolean;
+};
+
+type MediaAssetRecord = {
+  id: string;
+  s3Key: string;
+  filename: string;
+  mimeType?: string | null;
+  mediaType?: string | null;
 };
 
 type ProjectImageRecord = {
@@ -52,6 +69,11 @@ type ProjectRecord = {
   tagline: string;
   status: string;
   featured: boolean;
+  homepageVisible?: boolean;
+  homepageOrder?: number;
+  homepagePlacement?: string | null;
+  readTime?: string | null;
+  ctaLabel?: string | null;
   story: string;
   challenge: string;
   solution: string;
@@ -70,6 +92,7 @@ type ProjectRecord = {
   resolvedVideos?: VideoAssetRecord[];
   resolvedTags?: TagRecord[];
   resolvedTechStack?: SkillRecord[];
+  resolvedMediaAssets?: MediaAssetRecord[];
 };
 
 type BlogRecord = {
@@ -81,20 +104,71 @@ type BlogRecord = {
   coverImageKey?: string | null;
   status: string;
   featured: boolean;
+  homepageVisible?: boolean;
+  homepageOrder?: number;
+  readTime?: string | null;
+  ctaLabel?: string | null;
+  categoryId?: string | null;
+  resolvedCategory?: BlogCategoryRecord | null;
   publishedAt?: Date | null;
   videoEntries?: VideoEntryRecord[];
   tagIds?: string[];
   resolvedVideos?: VideoAssetRecord[];
   resolvedTags?: TagRecord[];
+  resolvedMediaAssets?: MediaAssetRecord[];
 };
 
-const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean)));
+const unique = (values: Array<string | null | undefined>) =>
+  Array.from(new Set(values.map(value => value?.trim()).filter(Boolean) as string[]));
 
 const byId = <T extends { id: string }>(items: T[]) =>
   new Map(items.map(item => [item.id, item]));
 
 const orderedEntries = (entries: VideoEntryRecord[] = []) =>
   [...entries].sort((a, b) => a.order - b.order);
+
+const bareFilename = (key?: string | null) => {
+  if (!key) return null;
+  const clean = key.trim().replace(/^\/+/, '');
+  if (!clean || clean.startsWith('http://') || clean.startsWith('https://')) return clean || null;
+  return clean.split('/').pop() ?? clean;
+};
+
+const resolveMediaKey = (key?: string | null, assets: MediaAssetRecord[] = []) => {
+  if (!key) return null;
+  const clean = key.trim().replace(/^\/+/, '');
+  if (!clean) return null;
+  if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+
+  const direct = assets.find(asset => asset.s3Key === clean);
+  if (direct) return direct.s3Key;
+
+  const filename = bareFilename(clean);
+  const fromFilename = assets.find(asset => asset.filename === filename || bareFilename(asset.s3Key) === filename);
+  if (fromFilename) return fromFilename.s3Key;
+
+  return clean;
+};
+
+const mediaUrl = (key?: string | null, assets: MediaAssetRecord[] = []) =>
+  assetUrlFromKey(resolveMediaKey(key, assets));
+
+async function resolveMediaAssets(keys: Array<string | null | undefined>) {
+  const cleanKeys = unique(keys);
+  if (cleanKeys.length === 0) return [];
+
+  const filenames = unique(cleanKeys.map(key => bareFilename(key)));
+
+  return prisma.mediaAsset.findMany({
+    where: {
+      OR: [
+        { s3Key: { in: cleanKeys } },
+        { filename: { in: filenames } },
+      ],
+    },
+    orderBy: { uploadedAt: 'desc' },
+  });
+}
 
 export const mapVideo = (v: VideoAssetRecord) => ({
   id: v.id,
@@ -114,7 +188,7 @@ export const mapSkill = (s: SkillRecord) => ({
   name: s.name,
   category: s.category,
   iconKey: s.iconKey,
-  iconUrl: assetUrlFromKey(s.iconKey),
+  iconUrl: assetUrlFromKey(s.resolvedIconKey ?? s.iconKey),
   proficiency: s.proficiency,
   order: s.order,
 });
@@ -125,9 +199,18 @@ export const mapTag = (t: TagRecord) => ({
   slug: t.slug,
 });
 
+export const mapBlogCategory = (c: BlogCategoryRecord) => ({
+  id: c.id,
+  name: c.name,
+  slug: c.slug,
+  order: c.order,
+  visible: c.visible,
+});
+
 export type MappedVideo = ReturnType<typeof mapVideo>;
 export type MappedSkill = ReturnType<typeof mapSkill>;
 export type MappedTag = ReturnType<typeof mapTag>;
+export type MappedBlogCategory = ReturnType<typeof mapBlogCategory>;
 
 export type MappedProject = {
   id: string;
@@ -136,6 +219,11 @@ export type MappedProject = {
   tagline: string;
   status: string;
   featured: boolean;
+  homepageVisible?: boolean;
+  homepageOrder?: number;
+  homepagePlacement?: string | null;
+  readTime?: string | null;
+  ctaLabel?: string | null;
   story: string;
   challenge: string;
   solution: string;
@@ -147,7 +235,7 @@ export type MappedProject = {
   pdfUrl: string | null;
   githubUrl?: string | null;
   liveUrl?: string | null;
-  images: Array<ProjectImageRecord & { url: string | null }>;
+  images: Array<ProjectImageRecord & { s3Key: string; url: string | null }>;
   videos: Array<{
     id: string;
     order: number;
@@ -166,6 +254,12 @@ export type MappedBlog = {
   body: string;
   status: string;
   featured: boolean;
+  homepageVisible?: boolean;
+  homepageOrder?: number;
+  readTime?: string | null;
+  ctaLabel?: string | null;
+  categoryId?: string | null;
+  category: MappedBlogCategory | null;
   coverImageKey?: string | null;
   coverImageUrl: string | null;
   publishedAt?: Date | null;
@@ -182,6 +276,9 @@ export function mapProject(p: ProjectRecord): MappedProject {
   const videoMap = byId(p.resolvedVideos ?? []);
   const techMap = byId(p.resolvedTechStack ?? []);
   const tagMap = byId(p.resolvedTags ?? []);
+  const mediaAssets = p.resolvedMediaAssets ?? [];
+  const coverImageKey = resolveMediaKey(p.coverImageKey, mediaAssets);
+  const pdfKey = resolveMediaKey(p.pdfKey, mediaAssets);
 
   return {
     id: p.id,
@@ -190,23 +287,28 @@ export function mapProject(p: ProjectRecord): MappedProject {
     tagline: p.tagline,
     status: p.status,
     featured: p.featured,
+    homepageVisible: p.homepageVisible,
+    homepageOrder: p.homepageOrder,
+    homepagePlacement: p.homepagePlacement,
+    readTime: p.readTime,
+    ctaLabel: p.ctaLabel,
     story: p.story,
     challenge: p.challenge,
     solution: p.solution,
     results: p.results,
     metrics: (p.metrics ?? null) as Record<string, string> | null,
-    coverImageKey: p.coverImageKey,
-    coverImageUrl: assetUrlFromKey(p.coverImageKey),
-    pdfKey: p.pdfKey,
-    pdfUrl: assetUrlFromKey(p.pdfKey),
+    coverImageKey,
+    coverImageUrl: assetUrlFromKey(coverImageKey),
+    pdfKey,
+    pdfUrl: assetUrlFromKey(pdfKey),
     githubUrl: p.githubUrl,
     liveUrl: p.liveUrl,
     images: [...(p.images ?? [])]
       .sort((a, b) => a.order - b.order)
-      .map(image => ({
-        ...image,
-        url: assetUrlFromKey(image.s3Key),
-      })),
+      .map(image => {
+        const s3Key = resolveMediaKey(image.s3Key, mediaAssets) ?? image.s3Key;
+        return { ...image, s3Key, url: assetUrlFromKey(s3Key) };
+      }),
     videos: orderedEntries(p.videoEntries).flatMap(entry => {
       const video = videoMap.get(entry.videoId);
       if (!video) return [];
@@ -234,6 +336,9 @@ export function mapProject(p: ProjectRecord): MappedProject {
 export function mapBlog(b: BlogRecord): MappedBlog {
   const videoMap = byId(b.resolvedVideos ?? []);
   const tagMap = byId(b.resolvedTags ?? []);
+  const mediaAssets = b.resolvedMediaAssets ?? [];
+  const coverImageKey = resolveMediaKey(b.coverImageKey, mediaAssets);
+  const category = b.resolvedCategory ? mapBlogCategory(b.resolvedCategory) : null;
 
   return {
     id: b.id,
@@ -243,8 +348,14 @@ export function mapBlog(b: BlogRecord): MappedBlog {
     body: b.body,
     status: b.status,
     featured: b.featured,
-    coverImageKey: b.coverImageKey,
-    coverImageUrl: assetUrlFromKey(b.coverImageKey),
+    homepageVisible: b.homepageVisible,
+    homepageOrder: b.homepageOrder,
+    readTime: b.readTime,
+    ctaLabel: b.ctaLabel,
+    categoryId: b.categoryId,
+    category,
+    coverImageKey,
+    coverImageUrl: assetUrlFromKey(coverImageKey),
     publishedAt: b.publishedAt,
     videos: orderedEntries(b.videoEntries).flatMap(entry => {
       const video = videoMap.get(entry.videoId);
@@ -266,31 +377,25 @@ export function mapBlog(b: BlogRecord): MappedBlog {
   };
 }
 
-export async function resolveProjectReferences<T extends ProjectRecord>(
-  projects: T[],
-) {
+export async function resolveProjectReferences<T extends ProjectRecord>(projects: T[]) {
   if (projects.length === 0) return [];
 
   const tagIds = unique(projects.flatMap(project => project.tagIds ?? []));
-  const techStackIds = unique(
-    projects.flatMap(project => project.techStackIds ?? []),
-  );
+  const techStackIds = unique(projects.flatMap(project => project.techStackIds ?? []));
   const videoIds = unique(
-    projects.flatMap(project =>
-      (project.videoEntries ?? []).map(entry => entry.videoId),
-    ),
+    projects.flatMap(project => (project.videoEntries ?? []).map(entry => entry.videoId)),
   );
+  const mediaKeys = projects.flatMap(project => [
+    project.coverImageKey,
+    project.pdfKey,
+    ...(project.images ?? []).map(image => image.s3Key),
+  ]);
 
-  const [tags, skills, videos] = await Promise.all([
-    tagIds.length
-      ? prisma.tag.findMany({ where: { id: { in: tagIds } } })
-      : Promise.resolve([]),
-    techStackIds.length
-      ? prisma.skill.findMany({ where: { id: { in: techStackIds } } })
-      : Promise.resolve([]),
-    videoIds.length
-      ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } })
-      : Promise.resolve([]),
+  const [tags, skills, videos, mediaAssets] = await Promise.all([
+    tagIds.length ? prisma.tag.findMany({ where: { id: { in: tagIds } } }) : Promise.resolve([]),
+    techStackIds.length ? prisma.skill.findMany({ where: { id: { in: techStackIds } } }) : Promise.resolve([]),
+    videoIds.length ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } }) : Promise.resolve([]),
+    resolveMediaAssets(mediaKeys),
   ]);
 
   const tagMap = byId(tags);
@@ -311,32 +416,30 @@ export async function resolveProjectReferences<T extends ProjectRecord>(
       const video = videoMap.get(entry.videoId);
       return video ? [video] : [];
     }),
+    resolvedMediaAssets: mediaAssets,
   }));
 }
 
-export async function resolveBlogReferences<T extends BlogRecord>(
-  posts: T[],
-) {
+export async function resolveBlogReferences<T extends BlogRecord>(posts: T[]) {
   if (posts.length === 0) return [];
 
   const tagIds = unique(posts.flatMap(post => post.tagIds ?? []));
   const videoIds = unique(
-    posts.flatMap(post =>
-      (post.videoEntries ?? []).map(entry => entry.videoId),
-    ),
+    posts.flatMap(post => (post.videoEntries ?? []).map(entry => entry.videoId)),
   );
+  const categoryIds = unique(posts.map(post => post.categoryId));
+  const mediaKeys = posts.map(post => post.coverImageKey);
 
-  const [tags, videos] = await Promise.all([
-    tagIds.length
-      ? prisma.tag.findMany({ where: { id: { in: tagIds } } })
-      : Promise.resolve([]),
-    videoIds.length
-      ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } })
-      : Promise.resolve([]),
+  const [tags, videos, categories, mediaAssets] = await Promise.all([
+    tagIds.length ? prisma.tag.findMany({ where: { id: { in: tagIds } } }) : Promise.resolve([]),
+    videoIds.length ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } }) : Promise.resolve([]),
+    categoryIds.length ? prisma.blogCategory.findMany({ where: { id: { in: categoryIds } } }) : Promise.resolve([]),
+    resolveMediaAssets(mediaKeys),
   ]);
 
   const tagMap = byId(tags);
   const videoMap = byId(videos);
+  const categoryMap = byId(categories);
 
   return posts.map(post => ({
     ...post,
@@ -344,16 +447,16 @@ export async function resolveBlogReferences<T extends BlogRecord>(
       const tag = tagMap.get(tagId);
       return tag ? [tag] : [];
     }),
+    resolvedCategory: post.categoryId ? categoryMap.get(post.categoryId) ?? null : null,
     resolvedVideos: orderedEntries(post.videoEntries).flatMap(entry => {
       const video = videoMap.get(entry.videoId);
       return video ? [video] : [];
     }),
+    resolvedMediaAssets: mediaAssets,
   }));
 }
 
-export async function resolveHomepageFeaturedVideo(
-  featuredVideoId: Nullable<string>,
-) {
+export async function resolveHomepageFeaturedVideo(featuredVideoId: Nullable<string>) {
   if (!featuredVideoId) return null;
 
   return prisma.videoAsset.findUnique({

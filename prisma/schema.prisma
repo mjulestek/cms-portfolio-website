@@ -137,6 +137,11 @@ model Project {
   liveUrl       String?
   coverImageKey String?
   pdfKey        String?
+  homepageVisible Boolean   @default(true)
+  homepageOrder   Int       @default(0)
+  homepagePlacement String?
+  readTime      String?
+  ctaLabel      String?
 
   // Embedded images — owned exclusively by this project
   images        ProjectImage[]
@@ -171,6 +176,18 @@ type ProjectVideoEntry {
   featured Boolean
 }
 
+model BlogCategory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String   @unique
+  slug      String   @unique
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visible, order])
+}
+
 model BlogPost {
   id            String    @id @default(auto()) @map("_id") @db.ObjectId
   slug          String    @unique
@@ -178,9 +195,14 @@ model BlogPost {
   excerpt       String
   body          String
   coverImageKey String?
+  categoryId    String?   @db.ObjectId
   status        Status    @default(DRAFT)
   featured      Boolean   @default(false)
   publishedAt   DateTime?
+  homepageVisible Boolean   @default(true)
+  homepageOrder   Int       @default(0)
+  readTime      String?
+  ctaLabel      String?
 
   // Reference arrays — resolved by the API layer
   videoEntries  BlogVideoEntry[]
@@ -315,14 +337,107 @@ model HomepageContent {
   id              String      @id @default("singleton") @map("_id")
   heroHeadline    String
   heroSubtext     String
+  heroImageKey    String?
   ctaText         String
   ctaUrl          String
   aboutText       String
   metaTitle       String
   metaDescription String
   featuredVideoId String?     @db.ObjectId
+  timelineEyebrow String?     @default("Timeline")
+  timelineTitle String?       @default("Experience and certifications")
+  timelineSubtitle String?    @default("Years of building, learning, and shipping infrastructure that matters.")
+  writingEyebrow String?      @default("Writing")
+  writingTitle String?        @default("Knowledge worth sharing")
+  writingSubtitle String?     @default("Technical insights from the field.")
+  projectsEyebrow String?     @default("Projects")
+  projectsTitle String?       @default("Work that scales")
+  projectsSubtitle String?    @default("Infrastructure built for production demands.")
+  stackEyebrow String?        @default("Stack")
+  stackTitle String?          @default("Tools that power production infrastructure")
+  stackSubtitle String?       @default("Built with technologies that handle real scale. Each tool chosen for reliability, not hype. The stack that runs the internet.")
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
+}
+
+
+model HomepageTimelineItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  year      String
+  title     String
+  description String
+  imageKey  String?
+  externalUrl String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, order])
+}
+
+model HomepageStackItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  description String
+  category  String
+  iconKey   String?
+  externalUrl String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([active, order])
+}
+
+model FooterSettings {
+  id        String   @id @default("singleton") @map("_id")
+  logoText  String
+  location  String
+  email     String
+  linkedInUrl String?
+  copyrightText String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model FooterNavigationLink {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  column    String
+  label     String
+  url       String
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visible, column, order])
+}
+
+model LegalLink {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  label     String
+  url       String
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([visible, order])
+}
+
+model HomepageCTASetting {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  section   String
+  label     String
+  url       String
+  order     Int      @default(0)
+  visible   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([section, visible, order])
 }
 
 model AnalyticsEvent {

@@ -35,7 +35,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const refs = await validateBlogReferences(input);
     if (!refs.ok) return refs.response;
 
-    const { tagIds, videoIds, ...scalarFields } = input;
+    const { tagIds, videoIds, categoryId, ...scalarFields } = input;
 
     const publishedAtUpdate =
       scalarFields.status === 'PUBLISHED'
@@ -51,6 +51,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       data: {
         ...scalarFields,
         ...publishedAtUpdate,
+        ...(categoryId !== undefined && { categoryId: categoryId || null }),
         ...(tagIds !== undefined && { tagIds }),
         ...(videoIds !== undefined && {
           videoEntries: videoIds.map((videoId: string, order: number) => ({ videoId, order, featured: order === 0 })),
