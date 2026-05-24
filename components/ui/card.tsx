@@ -1,11 +1,11 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
-  return <div className={`rounded-3xl border border-white/10 bg-white/[.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl ${className}`}>{children}</div>;
+  return <div className={`min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-white/[.045] p-5 shadow-2xl shadow-black/20 backdrop-blur-xl ${className}`}>{children}</div>;
 }
 
 export function Badge({ children }: { children: ReactNode }) {
-  return <span className="rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">{children}</span>;
+  return <span className="inline-flex max-w-full rounded-full border border-cyan-300/20 bg-cyan-400/10 px-3 py-1 text-xs text-cyan-100">{children}</span>;
 }
 
 type ButtonProps = {

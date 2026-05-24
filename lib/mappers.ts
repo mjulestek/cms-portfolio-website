@@ -1,4 +1,4 @@
-import { assetUrlFromKey } from '@/lib/env';
+import { assetUrlFromKey } from '@/lib/s3';
 import { prisma } from '@/lib/prisma';
 
 type Nullable<T> = T | null | undefined;
@@ -90,7 +90,8 @@ type BlogRecord = {
 
 const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean)));
 
-const byId = <T extends { id: string }>(items: T[]) => new Map(items.map(item => [item.id, item]));
+const byId = <T extends { id: string }>(items: T[]) =>
+  new Map(items.map(item => [item.id, item]));
 
 const orderedEntries = (entries: VideoEntryRecord[] = []) =>
   [...entries].sort((a, b) => a.order - b.order);
@@ -118,8 +119,11 @@ export const mapSkill = (s: SkillRecord) => ({
   order: s.order,
 });
 
-export const mapTag = (t: TagRecord) => ({ id: t.id, name: t.name, slug: t.slug });
-
+export const mapTag = (t: TagRecord) => ({
+  id: t.id,
+  name: t.name,
+  slug: t.slug,
+});
 
 export type MappedVideo = ReturnType<typeof mapVideo>;
 export type MappedSkill = ReturnType<typeof mapSkill>;
@@ -144,7 +148,12 @@ export type MappedProject = {
   githubUrl?: string | null;
   liveUrl?: string | null;
   images: Array<ProjectImageRecord & { url: string | null }>;
-  videos: Array<{ id: string; order: number; featured: boolean; video: MappedVideo }>;
+  videos: Array<{
+    id: string;
+    order: number;
+    featured: boolean;
+    video: MappedVideo;
+  }>;
   techStack: MappedSkill[];
   tags: MappedTag[];
 };
@@ -160,7 +169,12 @@ export type MappedBlog = {
   coverImageKey?: string | null;
   coverImageUrl: string | null;
   publishedAt?: Date | null;
-  videos: Array<{ id: string; order: number; featured: boolean; video: MappedVideo }>;
+  videos: Array<{
+    id: string;
+    order: number;
+    featured: boolean;
+    video: MappedVideo;
+  }>;
   tags: MappedTag[];
 };
 
@@ -189,11 +203,22 @@ export function mapProject(p: ProjectRecord): MappedProject {
     liveUrl: p.liveUrl,
     images: [...(p.images ?? [])]
       .sort((a, b) => a.order - b.order)
-      .map(image => ({ ...image, url: assetUrlFromKey(image.s3Key) })),
+      .map(image => ({
+        ...image,
+        url: assetUrlFromKey(image.s3Key),
+      })),
     videos: orderedEntries(p.videoEntries).flatMap(entry => {
       const video = videoMap.get(entry.videoId);
       if (!video) return [];
-      return [{ id: entry.videoId, order: entry.order, featured: entry.featured, video: mapVideo(video) }];
+
+      return [
+        {
+          id: entry.videoId,
+          order: entry.order,
+          featured: entry.featured,
+          video: mapVideo(video),
+        },
+      ];
     }),
     techStack: (p.techStackIds ?? []).flatMap(skillId => {
       const skill = techMap.get(skillId);
@@ -224,7 +249,15 @@ export function mapBlog(b: BlogRecord): MappedBlog {
     videos: orderedEntries(b.videoEntries).flatMap(entry => {
       const video = videoMap.get(entry.videoId);
       if (!video) return [];
-      return [{ id: entry.videoId, order: entry.order, featured: entry.featured, video: mapVideo(video) }];
+
+      return [
+        {
+          id: entry.videoId,
+          order: entry.order,
+          featured: entry.featured,
+          video: mapVideo(video),
+        },
+      ];
     }),
     tags: (b.tagIds ?? []).flatMap(tagId => {
       const tag = tagMap.get(tagId);
@@ -233,17 +266,31 @@ export function mapBlog(b: BlogRecord): MappedBlog {
   };
 }
 
-export async function resolveProjectReferences<T extends ProjectRecord>(projects: T[]) {
+export async function resolveProjectReferences<T extends ProjectRecord>(
+  projects: T[],
+) {
   if (projects.length === 0) return [];
 
   const tagIds = unique(projects.flatMap(project => project.tagIds ?? []));
-  const techStackIds = unique(projects.flatMap(project => project.techStackIds ?? []));
-  const videoIds = unique(projects.flatMap(project => (project.videoEntries ?? []).map(entry => entry.videoId)));
+  const techStackIds = unique(
+    projects.flatMap(project => project.techStackIds ?? []),
+  );
+  const videoIds = unique(
+    projects.flatMap(project =>
+      (project.videoEntries ?? []).map(entry => entry.videoId),
+    ),
+  );
 
   const [tags, skills, videos] = await Promise.all([
-    tagIds.length ? prisma.tag.findMany({ where: { id: { in: tagIds } } }) : Promise.resolve([]),
-    techStackIds.length ? prisma.skill.findMany({ where: { id: { in: techStackIds } } }) : Promise.resolve([]),
-    videoIds.length ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } }) : Promise.resolve([]),
+    tagIds.length
+      ? prisma.tag.findMany({ where: { id: { in: tagIds } } })
+      : Promise.resolve([]),
+    techStackIds.length
+      ? prisma.skill.findMany({ where: { id: { in: techStackIds } } })
+      : Promise.resolve([]),
+    videoIds.length
+      ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } })
+      : Promise.resolve([]),
   ]);
 
   const tagMap = byId(tags);
@@ -267,15 +314,25 @@ export async function resolveProjectReferences<T extends ProjectRecord>(projects
   }));
 }
 
-export async function resolveBlogReferences<T extends BlogRecord>(posts: T[]) {
+export async function resolveBlogReferences<T extends BlogRecord>(
+  posts: T[],
+) {
   if (posts.length === 0) return [];
 
   const tagIds = unique(posts.flatMap(post => post.tagIds ?? []));
-  const videoIds = unique(posts.flatMap(post => (post.videoEntries ?? []).map(entry => entry.videoId)));
+  const videoIds = unique(
+    posts.flatMap(post =>
+      (post.videoEntries ?? []).map(entry => entry.videoId),
+    ),
+  );
 
   const [tags, videos] = await Promise.all([
-    tagIds.length ? prisma.tag.findMany({ where: { id: { in: tagIds } } }) : Promise.resolve([]),
-    videoIds.length ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } }) : Promise.resolve([]),
+    tagIds.length
+      ? prisma.tag.findMany({ where: { id: { in: tagIds } } })
+      : Promise.resolve([]),
+    videoIds.length
+      ? prisma.videoAsset.findMany({ where: { id: { in: videoIds } } })
+      : Promise.resolve([]),
   ]);
 
   const tagMap = byId(tags);
@@ -294,7 +351,12 @@ export async function resolveBlogReferences<T extends BlogRecord>(posts: T[]) {
   }));
 }
 
-export async function resolveHomepageFeaturedVideo(featuredVideoId: Nullable<string>) {
+export async function resolveHomepageFeaturedVideo(
+  featuredVideoId: Nullable<string>,
+) {
   if (!featuredVideoId) return null;
-  return prisma.videoAsset.findUnique({ where: { id: featuredVideoId } });
+
+  return prisma.videoAsset.findUnique({
+    where: { id: featuredVideoId },
+  });
 }

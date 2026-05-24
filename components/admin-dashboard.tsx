@@ -167,20 +167,20 @@ function uniqueS3Key(folder: string, file: File) {
 export function AdminDashboard() {
   const [view, setView] = useState<View>(getInitialView);
   return (
-    <div className="mx-auto grid max-w-7xl gap-6 px-4 py-8 lg:grid-cols-[260px_1fr]">
-      <aside className="rounded-3xl border border-white/10 bg-white/[.045] p-4">
-        <p className="mb-4 text-xs uppercase tracking-[.2em] text-cyan-300">CMS Admin</p>
+    <div className="mx-auto grid w-full max-w-[1500px] min-w-0 items-start gap-5 px-3 py-5 sm:px-4 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-6">
+      <aside className="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/55 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl lg:sticky lg:top-24 lg:self-start">
+        <p className="mb-3 px-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">CMS Admin</p>
         {nav.map(v => (
           <button
             key={v}
             onClick={() => { setView(v); const path = Object.entries(routeViews).find(([, viewName]) => viewName === v)?.[0]; if (path && typeof window !== 'undefined') window.history.pushState(null, '', path); }}
-            className={`mb-1 block w-full rounded-2xl px-4 py-3 text-left text-sm capitalize ${view === v ? 'bg-cyan-300 text-slate-950' : 'text-slate-300 hover:bg-white/5'}`}
+            className={`mb-1 block w-full rounded-2xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${view === v ? 'bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30' : 'text-slate-300 hover:bg-white/[.07] hover:text-white'}`}
           >
             {v === 'messages' ? 'contact messages' : v}
           </button>
         ))}
       </aside>
-      <section>
+      <section className="min-w-0 overflow-hidden">
         <Header title={view === 'messages' ? 'contact messages' : view} />
         {view === 'overview' && <Overview />}
         {view === 'projects' && <ProjectManager />}
@@ -200,9 +200,9 @@ export function AdminDashboard() {
 
 function Header({ title }: { title: string }) {
   return (
-    <div className="mb-6">
-      <p className="text-cyan-300">Admin</p>
-      <h1 className="text-4xl font-black capitalize text-white">{title}</h1>
+    <div className="mb-5 rounded-3xl border border-white/10 bg-white/[.03] px-5 py-4 backdrop-blur">
+      <p className="text-sm font-bold text-cyan-300">Admin</p>
+      <h1 className="mt-1 text-3xl font-black capitalize tracking-tight text-white sm:text-4xl">{title}</h1>
     </div>
   );
 }
@@ -210,9 +210,9 @@ function Header({ title }: { title: string }) {
 function Status({ loading, feedback }: { loading: boolean; feedback: Feedback }) {
   return (
     <>
-      {loading && <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">Loading…</p>}
+      {loading && <p className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">Loading…</p>}
       {feedback && (
-        <p className={`rounded-2xl px-4 py-3 text-sm ${feedback.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
+        <p className={`min-w-0 break-words rounded-2xl px-4 py-3 text-sm ${feedback.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
           {feedback.message}
         </p>
       )}
@@ -222,14 +222,14 @@ function Status({ loading, feedback }: { loading: boolean; feedback: Feedback })
 
 function Field({ label, name, value, required, type = 'text' }: { label: string; name: string; value?: unknown; required?: boolean; type?: string }) {
   return (
-    <label className="grid gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
       {label}
       <input
         name={name}
         type={type}
         required={required}
         defaultValue={textValue(value)}
-        className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
       />
     </label>
   );
@@ -237,14 +237,14 @@ function Field({ label, name, value, required, type = 'text' }: { label: string;
 
 function TextArea({ label, name, value, required, rows = 4 }: { label: string; name: string; value?: unknown; required?: boolean; rows?: number }) {
   return (
-    <label className="grid gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
       {label}
       <textarea
         name={name}
         required={required}
         rows={rows}
         defaultValue={textValue(value)}
-        className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
       />
     </label>
   );
@@ -252,9 +252,9 @@ function TextArea({ label, name, value, required, rows = 4 }: { label: string; n
 
 function SelectField({ label, name, value, options }: { label: string; name: string; value?: unknown; options: string[] }) {
   return (
-    <label className="grid gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
       {label}
-      <select name={name} defaultValue={textValue(value || options[0])} className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50">
+      <select name={name} defaultValue={textValue(value || options[0])} className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50">
         {options.map(option => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
@@ -271,15 +271,15 @@ function CheckField({ label, name, value }: { label: string; name: string; value
 }
 
 function ActionButton({ children, type = 'button', onClick }: { children: React.ReactNode; type?: 'button' | 'submit'; onClick?: () => void }) {
-  return <button type={type} onClick={onClick} className="inline-flex rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950">{children}</button>;
+  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60">{children}</button>;
 }
 
 function SecondaryButton({ children, onClick, type = 'button' }: { children: React.ReactNode; onClick?: () => void; type?: 'button' | 'submit' }) {
-  return <button type={type} onClick={onClick} className="inline-flex rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white">{children}</button>;
+  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-cyan-300/30 hover:bg-white/10">{children}</button>;
 }
 
 function DangerButton({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
-  return <button type="button" onClick={onClick} className="inline-flex rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-3 text-sm font-bold text-rose-200">{children}</button>;
+  return <button type="button" onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-3 text-sm font-bold text-rose-200 transition hover:bg-rose-500/20">{children}</button>;
 }
 
 function Overview() {
@@ -305,9 +305,9 @@ function Overview() {
   }, []);
 
   return (
-    <div className="grid gap-4">
+    <div className="grid min-w-0 gap-4">
       <Status loading={loading} feedback={feedback} />
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[
           ['Projects', counts.projects],
           ['Posts', counts.posts],
@@ -491,7 +491,7 @@ function MediaPicker({
   useEffect(() => { void loadAssets(); }, [loadAssets]);
 
   return (
-    <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
       <input type="hidden" name={name} value={selectedKey} />
       <div>
         <p className="text-sm font-bold text-slate-200">{label}</p>
@@ -501,7 +501,7 @@ function MediaPicker({
       <select
         value={selectedKey}
         onChange={event => setSelectedKey(event.target.value)}
-        className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
       >
         <option value="">No media selected</option>
         {assets.filter(asset => mediaMatchesAccept(asset, accept)).map(asset => (
@@ -512,8 +512,8 @@ function MediaPicker({
       </select>
 
       {selectedKey && (
-        <div className="rounded-2xl border border-white/10 bg-slate-950/50 p-3">
-          <p className="break-all text-xs text-slate-400">Selected key: {selectedKey}</p>
+        <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-3">
+          <p className="min-w-0 break-all text-xs text-slate-400">Selected key: {selectedKey}</p>
           {typeof selectedAsset?.url === 'string' && typeof selectedAsset?.mimeType === 'string' && selectedAsset.mimeType.startsWith('image/') && (
             <img
               src={selectedAsset.url}
@@ -640,13 +640,13 @@ function MediaUploader({
   }
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
+    <div className="grid min-w-0 gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
       <p className="text-xs text-slate-500">{fileKindHelp(accept)}</p>
       <input
         type="file"
         accept={accept}
         onChange={event => setFile(event.target.files?.[0] ?? null)}
-        className="text-sm text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:text-sm file:font-bold file:text-slate-950"
+        className="w-full min-w-0 text-sm text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:text-sm file:font-bold file:text-slate-950"
       />
       <input
         value={alt}
@@ -731,7 +731,7 @@ function MultiIdSelector({
   }
 
   return (
-    <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
       <input type="hidden" name={name} value={selectedIds.join(',')} />
       <div>
         <p className="text-sm font-bold text-slate-200">{title}</p>
@@ -740,7 +740,7 @@ function MultiIdSelector({
       {items.length === 0 ? (
         <p className="text-sm text-slate-500">No records found. You can still save without selecting any.</p>
       ) : (
-        <div className="grid gap-2 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+        <div className="grid min-w-0 gap-2 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
           {items.map(item => (
             <label key={String(item.id)} className="flex items-center gap-3 text-sm text-slate-300">
               <input
@@ -787,7 +787,7 @@ function VideoSelector({ name, value, multiple = true }: { name: string; value?:
   }
 
   return (
-    <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
       <input type="hidden" name={name} value={multiple ? selectedIds.join(',') : (selectedIds[0] ?? '')} />
       <div>
         <p className="text-sm font-bold text-slate-200">Videos</p>
@@ -807,12 +807,12 @@ function VideoSelector({ name, value, multiple = true }: { name: string; value?:
       ) : (
         <div className="grid gap-3">
           {videos.map(video => (
-            <label key={video.id} className="flex gap-3 rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-sm text-slate-300">
+            <label key={video.id} className="flex min-w-0 gap-3 rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-sm text-slate-300">
               <input type="checkbox" checked={selectedIds.includes(video.id)} onChange={() => toggle(video.id)} className="mt-1 h-4 w-4" />
               {video.thumbnailUrl && <img src={video.thumbnailUrl} alt={video.title} className="h-16 w-24 rounded-xl object-cover" />}
-              <span>
-                <span className="block font-bold text-white">{video.title}</span>
-                <span className="block text-xs text-slate-500">{video.youtubeVideoId}</span>
+              <span className="min-w-0">
+                <span className="block truncate font-bold text-white">{video.title}</span>
+                <span className="block truncate text-xs text-slate-500">{video.youtubeVideoId}</span>
               </span>
             </label>
           ))}
@@ -852,7 +852,7 @@ function QuickVideoCreator({ onCreated }: { onCreated: (video: VideoOption) => v
   }
 
   return (
-    <div className="grid gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
+    <div className="grid min-w-0 gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
       <input value={youtubeUrl} onChange={event => setYoutubeUrl(event.target.value)} placeholder="Paste YouTube URL" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
       <input value={title} onChange={event => setTitle(event.target.value)} placeholder="Video title" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
       <input value={caption} onChange={event => setCaption(event.target.value)} placeholder="Caption optional" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
@@ -898,10 +898,10 @@ function MediaForm({ record }: { record: ApiRecord }) {
 function MediaSummary({ record }: { record: ApiRecord }) {
   const asset = isMediaAsset(record) ? record : null;
   return (
-    <div className="mt-2 grid gap-2 text-sm text-slate-400">
+    <div className="mt-2 grid min-w-0 gap-2 text-sm text-slate-400">
       <p><span className="text-slate-500">filename: </span>{textValue(record.filename)}</p>
       <p><span className="text-slate-500">type: </span>{textValue(record.mediaType)}</p>
-      <p className="break-all"><span className="text-slate-500">key: </span>{textValue(record.s3Key)}</p>
+      <p className="min-w-0 break-all"><span className="text-slate-500">key: </span>{textValue(record.s3Key)}</p>
       {asset?.url && asset.mimeType.startsWith('image/') && <img src={asset.url} alt={asset.alt ?? asset.filename} className="mt-2 max-h-36 rounded-2xl object-cover" />}
     </div>
   );
@@ -929,8 +929,8 @@ function MediaUploaderCard() {
         <MediaUploader defaultFolder="images" usedIn="media-library" onUploaded={setUploaded} />
       </div>
       {uploaded && (
-        <div className="mt-4 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-          <p className="break-all text-sm text-slate-300">Uploaded key: {uploaded.s3Key}</p>
+        <div className="mt-4 min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
+          <p className="min-w-0 break-all text-sm text-slate-300">Uploaded key: {uploaded.s3Key}</p>
           {uploaded.url && uploaded.mimeType.startsWith('image/') && <img src={uploaded.url} alt={uploaded.alt ?? uploaded.filename} className="mt-3 max-h-48 rounded-2xl object-cover" />}
         </div>
       )}
@@ -969,7 +969,7 @@ function VideoForm({ record }: { record: ApiRecord }) {
 function VideoSummary({ record }: { record: ApiRecord }) {
   const video = isVideoAsset(record) ? record : null;
   return (
-    <div className="mt-2 grid gap-2 text-sm text-slate-400">
+    <div className="mt-2 grid min-w-0 gap-2 text-sm text-slate-400">
       <p><span className="text-slate-500">youtubeVideoId: </span>{textValue(record.youtubeVideoId)}</p>
       <p><span className="text-slate-500">category: </span>{textValue(record.category)}</p>
       <p><span className="text-slate-500">caption: </span>{textValue(record.caption)}</p>
@@ -1138,10 +1138,10 @@ function HomepageManager() {
 
   const record = content ?? {};
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-5">
       <Status loading={loading} feedback={feedback} />
-      <Card>
-        <form onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="grid gap-4">
+      <Card className="min-w-0 overflow-hidden">
+        <form onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="grid min-w-0 gap-4">
           <Field label="Hero headline" name="heroHeadline" value={record.heroHeadline} required />
           <TextArea label="Hero subtext" name="heroSubtext" value={record.heroSubtext} required />
           <Field label="CTA text" name="ctaText" value={record.ctaText} required />
@@ -1199,7 +1199,7 @@ function ContactMessagesManager() {
   }
 
   return (
-    <div className="grid gap-6">
+    <div className="grid min-w-0 gap-5">
       <Status loading={loading} feedback={feedback} />
       {messages.length === 0 && !loading && <Card><p className="text-slate-400">No contact messages found.</p></Card>}
       {messages.map(message => (
@@ -1327,18 +1327,18 @@ function CrudManager(props: CrudManagerProps) {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-      <div className="grid gap-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+    <div className="grid w-full min-w-0 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(360px,430px)]">
+      <div className="grid min-w-0 gap-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
           <Status loading={loading} feedback={feedback} />
           <ActionButton onClick={() => { setSelected(null); setMode('create'); }}>New</ActionButton>
         </div>
         {items.length === 0 && !loading && <Card><p className="text-slate-400">No records found.</p></Card>}
         {items.map(record => (
-          <Card key={String(record.id)}>
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <h2 className="text-2xl font-black text-white">{textValue(recordTitle(record))}</h2>
+          <Card key={String(record.id)} className="min-w-0">
+            <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
+                <h2 className="break-words text-xl font-black text-white sm:text-2xl">{textValue(recordTitle(record))}</h2>
                 {props.renderSummary(record)}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1350,9 +1350,9 @@ function CrudManager(props: CrudManagerProps) {
         ))}
         {props.extraAction}
       </div>
-      <Card>
+      <Card className="min-w-0 overflow-hidden xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto">
         <h2 className="text-2xl font-black text-white">{mode === 'create' ? `New ${props.title}` : `Edit ${props.title}`}</h2>
-        <form key={`${mode}-${selected?.id ?? 'new'}`} onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="mt-4 grid gap-4">
+        <form key={`${mode}-${selected?.id ?? 'new'}`} onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="mt-4 grid min-w-0 gap-4">
           {props.renderForm(current, mode)}
           <ActionButton type="submit">{props.submitLabel ?? 'Save'}</ActionButton>
         </form>
@@ -1363,9 +1363,9 @@ function CrudManager(props: CrudManagerProps) {
 
 function RecordSummary({ record, fields }: { record: ApiRecord; fields: string[] }) {
   return (
-    <div className="mt-2 grid gap-1 text-sm text-slate-400">
+    <div className="mt-2 grid min-w-0 gap-1 text-sm text-slate-400">
       {fields.map(field => (
-        <p key={field}><span className="text-slate-500">{field}: </span>{textValue(record[field])}</p>
+        <p key={field} className="min-w-0 break-words"><span className="text-slate-500">{field}: </span>{textValue(record[field])}</p>
       ))}
     </div>
   );
