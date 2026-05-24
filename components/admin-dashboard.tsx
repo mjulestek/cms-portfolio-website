@@ -184,13 +184,13 @@ export function AdminDashboard() {
   const [view, setView] = useState<View>(getInitialView);
   return (
     <div className="mx-auto grid w-full max-w-[1500px] min-w-0 items-start gap-5 px-3 py-5 sm:px-4 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-6">
-      <aside className="min-w-0 overflow-hidden rounded-3xl border border-white/10 bg-slate-950/55 p-3 shadow-2xl shadow-black/20 backdrop-blur-xl lg:sticky lg:top-24 lg:self-start">
-        <p className="mb-3 px-2 text-xs font-bold uppercase tracking-[.2em] text-cyan-300">CMS Admin</p>
+      <aside className="min-w-0 overflow-hidden rounded-[1.5rem] border border-neutral-300 bg-white p-3 shadow-sm lg:sticky lg:top-24 lg:self-start">
+        <p className="mb-3 px-2 text-xs font-bold uppercase tracking-[.2em] text-neutral-600">CMS Admin</p>
         {nav.map(v => (
           <button
             key={v}
             onClick={() => { setView(v); const path = Object.entries(routeViews).find(([, viewName]) => viewName === v)?.[0]; if (path && typeof window !== 'undefined') window.history.pushState(null, '', path); }}
-            className={`mb-1 block w-full rounded-2xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${view === v ? 'bg-cyan-300 text-slate-950 shadow-lg shadow-cyan-950/30' : 'text-slate-300 hover:bg-white/[.07] hover:text-white'}`}
+            className={`mb-1 block w-full rounded-2xl px-3 py-2.5 text-left text-sm font-medium capitalize transition ${view === v ? 'bg-neutral-950 text-white ' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-950'}`}
           >
             {viewLabel(v)}
           </button>
@@ -223,9 +223,9 @@ export function AdminDashboard() {
 
 function Header({ title }: { title: string }) {
   return (
-    <div className="mb-5 rounded-3xl border border-white/10 bg-white/[.03] px-5 py-4 backdrop-blur">
-      <p className="text-sm font-bold text-cyan-300">Admin</p>
-      <h1 className="mt-1 text-3xl font-black capitalize tracking-tight text-white sm:text-4xl">{title}</h1>
+    <div className="mb-5 rounded-[1.5rem] border border-neutral-300 bg-neutral-50 px-5 py-4 backdrop-blur">
+      <p className="text-sm font-bold text-neutral-600">Admin</p>
+      <h1 className="mt-1 text-3xl font-black capitalize tracking-tight text-neutral-950 sm:text-4xl">{title}</h1>
     </div>
   );
 }
@@ -233,9 +233,9 @@ function Header({ title }: { title: string }) {
 function Status({ loading, feedback }: { loading: boolean; feedback: Feedback }) {
   return (
     <>
-      {loading && <p className="min-w-0 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-slate-300">Loading…</p>}
+      {loading && <p className="min-w-0 rounded-2xl border border-neutral-300 bg-white px-4 py-3 text-sm text-neutral-700">Loading…</p>}
       {feedback && (
-        <p className={`min-w-0 break-words rounded-2xl px-4 py-3 text-sm ${feedback.type === 'success' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-rose-500/10 text-rose-300'}`}>
+        <p className={`min-w-0 break-words rounded-2xl px-4 py-3 text-sm ${feedback.type === 'success' ? 'bg-emerald-50 border border-emerald-200 text-emerald-700' : 'bg-rose-50 border border-rose-200 text-rose-700'}`}>
           {feedback.message}
         </p>
       )}
@@ -245,14 +245,14 @@ function Status({ loading, feedback }: { loading: boolean; feedback: Feedback })
 
 function Field({ label, name, value, required, type = 'text' }: { label: string; name: string; value?: unknown; required?: boolean; type?: string }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-neutral-700">
       {label}
       <input
         name={name}
         type={type}
         required={required}
         defaultValue={textValue(value)}
-        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-white px-4 py-3 text-neutral-950 outline-none ring-1 ring-neutral-300 transition focus:ring-neutral-950/20 focus:border-neutral-950"
       />
     </label>
   );
@@ -260,14 +260,14 @@ function Field({ label, name, value, required, type = 'text' }: { label: string;
 
 function TextArea({ label, name, value, required, rows = 4 }: { label: string; name: string; value?: unknown; required?: boolean; rows?: number }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-neutral-700">
       {label}
       <textarea
         name={name}
         required={required}
         rows={rows}
         defaultValue={textValue(value)}
-        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-white px-4 py-3 text-neutral-950 outline-none ring-1 ring-neutral-300 transition focus:ring-neutral-950/20 focus:border-neutral-950"
       />
     </label>
   );
@@ -275,9 +275,9 @@ function TextArea({ label, name, value, required, rows = 4 }: { label: string; n
 
 function SelectField({ label, name, value, options }: { label: string; name: string; value?: unknown; options: string[] }) {
   return (
-    <label className="grid min-w-0 gap-1 text-sm text-slate-300">
+    <label className="grid min-w-0 gap-1 text-sm text-neutral-700">
       {label}
-      <select name={name} defaultValue={textValue(value || options[0])} className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50">
+      <select name={name} defaultValue={textValue(value || options[0])} className="w-full min-w-0 rounded-2xl bg-white px-4 py-3 text-neutral-950 outline-none ring-1 ring-neutral-300 transition focus:ring-neutral-950/20 focus:border-neutral-950">
         {options.map(option => <option key={option} value={option}>{option}</option>)}
       </select>
     </label>
@@ -286,7 +286,7 @@ function SelectField({ label, name, value, options }: { label: string; name: str
 
 function CheckField({ label, name, value }: { label: string; name: string; value?: unknown }) {
   return (
-    <label className="flex items-center gap-2 text-sm text-slate-300">
+    <label className="flex items-center gap-2 text-sm text-neutral-700">
       <input name={name} type="checkbox" defaultChecked={Boolean(value)} className="h-4 w-4" />
       {label}
     </label>
@@ -294,15 +294,15 @@ function CheckField({ label, name, value }: { label: string; name: string; value
 }
 
 function ActionButton({ children, type = 'button', onClick }: { children: React.ReactNode; type?: 'button' | 'submit'; onClick?: () => void }) {
-  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl bg-cyan-300 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-cyan-200 disabled:cursor-not-allowed disabled:opacity-60">{children}</button>;
+  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl bg-neutral-950 px-5 py-3 text-sm font-bold text-white transition hover:bg-neutral-800 disabled:cursor-not-allowed disabled:opacity-60">{children}</button>;
 }
 
 function SecondaryButton({ children, onClick, type = 'button' }: { children: React.ReactNode; onClick?: () => void; type?: 'button' | 'submit' }) {
-  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-white/10 bg-white/5 px-5 py-3 text-sm font-bold text-white transition hover:border-cyan-300/30 hover:bg-white/10">{children}</button>;
+  return <button type={type} onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-neutral-300 bg-white px-5 py-3 text-sm font-bold text-neutral-950 transition hover:border-neutral-950 hover:bg-neutral-100">{children}</button>;
 }
 
 function DangerButton({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) {
-  return <button type="button" onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-rose-400/30 bg-rose-500/10 px-5 py-3 text-sm font-bold text-rose-200 transition hover:bg-rose-500/20">{children}</button>;
+  return <button type="button" onClick={onClick} className="inline-flex items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-bold text-rose-700 transition hover:bg-rose-500/20">{children}</button>;
 }
 
 function Overview() {
@@ -338,8 +338,8 @@ function Overview() {
           ['Messages', counts.messages],
         ].map(([label, count]) => (
           <Card key={String(label)}>
-            <p className="text-3xl font-black text-white">{String(count)}</p>
-            <p className="text-slate-400">{String(label)}</p>
+            <p className="text-3xl font-black text-neutral-950">{String(count)}</p>
+            <p className="text-neutral-600">{String(label)}</p>
           </Card>
         ))}
       </div>
@@ -551,14 +551,14 @@ function BlogCategorySelect({ name, value }: { name: string; value?: unknown }) 
   }, []);
 
   return (
-    <div className="grid gap-2 rounded-3xl border border-white/10 bg-white/[.035] p-4">
-      <label className="grid gap-1 text-sm text-slate-300">
+    <div className="grid gap-2 rounded-[1.5rem] border border-neutral-300 bg-white p-4">
+      <label className="grid gap-1 text-sm text-neutral-700">
         Blog category
         <select
           name={name}
           value={selected}
           onChange={event => setSelected(event.target.value)}
-          className="rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+          className="rounded-2xl bg-white px-4 py-3 text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950"
         >
           <option value="">No category</option>
           {categories.map(category => (
@@ -607,17 +607,17 @@ function MediaPicker({
   useEffect(() => { void loadAssets(); }, [loadAssets]);
 
   return (
-    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-[1.5rem] border border-neutral-300 bg-white p-4">
       <input type="hidden" name={name} value={selectedKey} />
       <div>
         <p className="text-sm font-bold text-slate-200">{label}</p>
-        <p className="text-xs text-slate-500">Upload a new file or choose one from the existing media library. The saved value is the S3 key.</p>
+        <p className="text-xs text-neutral-500">Upload a new file or choose one from the existing media library. The saved value is the S3 key.</p>
       </div>
 
       <select
         value={selectedKey}
         onChange={event => setSelectedKey(event.target.value)}
-        className="w-full min-w-0 rounded-2xl bg-slate-950/60 px-4 py-3 text-white outline-none ring-1 ring-white/10 transition focus:ring-cyan-300/50"
+        className="w-full min-w-0 rounded-2xl bg-white px-4 py-3 text-neutral-950 outline-none ring-1 ring-neutral-300 transition focus:ring-neutral-950/20 focus:border-neutral-950"
       >
         <option value="">No media selected</option>
         {assets.filter(asset => mediaMatchesAccept(asset, accept)).map(asset => (
@@ -628,8 +628,8 @@ function MediaPicker({
       </select>
 
       {selectedKey && (
-        <div className="min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-3">
-          <p className="min-w-0 break-all text-xs text-slate-400">Selected key: {selectedKey}</p>
+        <div className="min-w-0 rounded-2xl border border-neutral-300 bg-neutral-50 p-3">
+          <p className="min-w-0 break-all text-xs text-neutral-600">Selected key: {selectedKey}</p>
           {typeof selectedAsset?.url === 'string' && typeof selectedAsset?.mimeType === 'string' && selectedAsset.mimeType.startsWith('image/') && (
             <img
               src={selectedAsset.url}
@@ -638,7 +638,7 @@ function MediaPicker({
             />
           )}
           {typeof selectedAsset?.url === 'string' && typeof selectedAsset?.mimeType === 'string' && !selectedAsset.mimeType.startsWith('image/') && (
-            <a className="mt-3 inline-flex text-sm font-bold text-cyan-300" href={selectedAsset.url} target="_blank" rel="noreferrer">Open uploaded file</a>
+            <a className="mt-3 inline-flex text-sm font-bold text-neutral-600" href={selectedAsset.url} target="_blank" rel="noreferrer">Open uploaded file</a>
           )}
         </div>
       )}
@@ -756,19 +756,19 @@ function MediaUploader({
   }
 
   return (
-    <div className="grid min-w-0 gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
-      <p className="text-xs text-slate-500">{fileKindHelp(accept)}</p>
+    <div className="grid min-w-0 gap-3 rounded-2xl border border-neutral-300 bg-neutral-50 p-3">
+      <p className="text-xs text-neutral-500">{fileKindHelp(accept)}</p>
       <input
         type="file"
         accept={accept}
         onChange={event => setFile(event.target.files?.[0] ?? null)}
-        className="w-full min-w-0 text-sm text-slate-300 file:mr-3 file:rounded-xl file:border-0 file:bg-cyan-300 file:px-4 file:py-2 file:text-sm file:font-bold file:text-slate-950"
+        className="w-full min-w-0 text-sm text-neutral-700 file:mr-3 file:rounded-xl file:border-0 file:bg-neutral-950 file:px-4 file:py-2 file:text-sm file:font-bold file:text-neutral-950"
       />
       <input
         value={alt}
         onChange={event => setAlt(event.target.value)}
         placeholder="Alt text / description"
-        className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50"
+        className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950"
       />
       <SecondaryButton onClick={upload}>{uploading ? 'Uploading…' : 'Upload file'}</SecondaryButton>
       <Status loading={uploading} feedback={feedback} />
@@ -847,18 +847,18 @@ function MultiIdSelector({
   }
 
   return (
-    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-[1.5rem] border border-neutral-300 bg-white p-4">
       <input type="hidden" name={name} value={selectedIds.join(',')} />
       <div>
         <p className="text-sm font-bold text-slate-200">{title}</p>
-        <p className="text-xs text-slate-500">{description}</p>
+        <p className="text-xs text-neutral-500">{description}</p>
       </div>
       {items.length === 0 ? (
-        <p className="text-sm text-slate-500">No records found. You can still save without selecting any.</p>
+        <p className="text-sm text-neutral-500">No records found. You can still save without selecting any.</p>
       ) : (
-        <div className="grid min-w-0 gap-2 rounded-2xl border border-white/10 bg-slate-950/40 p-3">
+        <div className="grid min-w-0 gap-2 rounded-2xl border border-neutral-300 bg-neutral-50 p-3">
           {items.map(item => (
-            <label key={String(item.id)} className="flex items-center gap-3 text-sm text-slate-300">
+            <label key={String(item.id)} className="flex items-center gap-3 text-sm text-neutral-700">
               <input
                 type="checkbox"
                 checked={typeof item.id === 'string' && selectedIds.includes(item.id)}
@@ -903,11 +903,11 @@ function VideoSelector({ name, value, multiple = true }: { name: string; value?:
   }
 
   return (
-    <div className="grid min-w-0 gap-3 rounded-3xl border border-white/10 bg-white/[.035] p-4">
+    <div className="grid min-w-0 gap-3 rounded-[1.5rem] border border-neutral-300 bg-white p-4">
       <input type="hidden" name={name} value={multiple ? selectedIds.join(',') : (selectedIds[0] ?? '')} />
       <div>
         <p className="text-sm font-bold text-slate-200">Videos</p>
-        <p className="text-xs text-slate-500">Paste a YouTube URL to create a video, then select the videos to attach.</p>
+        <p className="text-xs text-neutral-500">Paste a YouTube URL to create a video, then select the videos to attach.</p>
       </div>
 
       <QuickVideoCreator onCreated={(video) => {
@@ -919,16 +919,16 @@ function VideoSelector({ name, value, multiple = true }: { name: string; value?:
       }} />
 
       {videos.length === 0 ? (
-        <p className="text-sm text-slate-500">No videos found yet.</p>
+        <p className="text-sm text-neutral-500">No videos found yet.</p>
       ) : (
         <div className="grid gap-3">
           {videos.map(video => (
-            <label key={video.id} className="flex min-w-0 gap-3 rounded-2xl border border-white/10 bg-slate-950/40 p-3 text-sm text-slate-300">
+            <label key={video.id} className="flex min-w-0 gap-3 rounded-2xl border border-neutral-300 bg-neutral-50 p-3 text-sm text-neutral-700">
               <input type="checkbox" checked={selectedIds.includes(video.id)} onChange={() => toggle(video.id)} className="mt-1 h-4 w-4" />
               {video.thumbnailUrl && <img src={video.thumbnailUrl} alt={video.title} className="h-16 w-24 rounded-xl object-cover" />}
               <span className="min-w-0">
-                <span className="block truncate font-bold text-white">{video.title}</span>
-                <span className="block truncate text-xs text-slate-500">{video.youtubeVideoId}</span>
+                <span className="block truncate font-bold text-neutral-950">{video.title}</span>
+                <span className="block truncate text-xs text-neutral-500">{video.youtubeVideoId}</span>
               </span>
             </label>
           ))}
@@ -968,11 +968,11 @@ function QuickVideoCreator({ onCreated }: { onCreated: (video: VideoOption) => v
   }
 
   return (
-    <div className="grid min-w-0 gap-3 rounded-2xl border border-white/10 bg-white/[.03] p-3">
-      <input value={youtubeUrl} onChange={event => setYoutubeUrl(event.target.value)} placeholder="Paste YouTube URL" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
-      <input value={title} onChange={event => setTitle(event.target.value)} placeholder="Video title" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
-      <input value={caption} onChange={event => setCaption(event.target.value)} placeholder="Caption optional" className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50" />
-      <select value={category} onChange={event => setCategory(event.target.value)} className="rounded-2xl bg-slate-950/60 px-4 py-3 text-sm text-white outline-none ring-1 ring-white/10 focus:ring-cyan-300/50">
+    <div className="grid min-w-0 gap-3 rounded-2xl border border-neutral-300 bg-neutral-50 p-3">
+      <input value={youtubeUrl} onChange={event => setYoutubeUrl(event.target.value)} placeholder="Paste YouTube URL" className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950" />
+      <input value={title} onChange={event => setTitle(event.target.value)} placeholder="Video title" className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950" />
+      <input value={caption} onChange={event => setCaption(event.target.value)} placeholder="Caption optional" className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950" />
+      <select value={category} onChange={event => setCategory(event.target.value)} className="rounded-2xl bg-white px-4 py-3 text-sm text-neutral-950 outline-none ring-1 ring-neutral-300 focus:ring-neutral-950/20 focus:border-neutral-950">
         {['DEMO', 'WALKTHROUGH', 'ARCHITECTURE', 'TUTORIAL', 'TESTIMONIAL', 'INTRO'].map(option => <option key={option}>{option}</option>)}
       </select>
       <SecondaryButton onClick={create}>Add YouTube video</SecondaryButton>
@@ -1014,10 +1014,10 @@ function MediaForm({ record }: { record: ApiRecord }) {
 function MediaSummary({ record }: { record: ApiRecord }) {
   const asset = isMediaAsset(record) ? record : null;
   return (
-    <div className="mt-2 grid min-w-0 gap-2 text-sm text-slate-400">
-      <p><span className="text-slate-500">filename: </span>{textValue(record.filename)}</p>
-      <p><span className="text-slate-500">type: </span>{textValue(record.mediaType)}</p>
-      <p className="min-w-0 break-all"><span className="text-slate-500">key: </span>{textValue(record.s3Key)}</p>
+    <div className="mt-2 grid min-w-0 gap-2 text-sm text-neutral-600">
+      <p><span className="text-neutral-500">filename: </span>{textValue(record.filename)}</p>
+      <p><span className="text-neutral-500">type: </span>{textValue(record.mediaType)}</p>
+      <p className="min-w-0 break-all"><span className="text-neutral-500">key: </span>{textValue(record.s3Key)}</p>
       {asset?.url && asset.mimeType.startsWith('image/') && <img src={asset.url} alt={asset.alt ?? asset.filename} className="mt-2 max-h-36 rounded-2xl object-cover" />}
     </div>
   );
@@ -1039,14 +1039,14 @@ function MediaUploaderCard() {
   const [uploaded, setUploaded] = useState<MediaOption | null>(null);
   return (
     <Card>
-      <h2 className="text-2xl font-black text-white">Upload file to S3</h2>
-      <p className="mt-2 text-slate-400">Choose a file and the dashboard uploads it to S3, then saves the media record automatically.</p>
+      <h2 className="text-2xl font-black text-neutral-950">Upload file to S3</h2>
+      <p className="mt-2 text-neutral-600">Choose a file and the dashboard uploads it to S3, then saves the media record automatically.</p>
       <div className="mt-4">
         <MediaUploader defaultFolder="images" usedIn="media-library" onUploaded={setUploaded} />
       </div>
       {uploaded && (
-        <div className="mt-4 min-w-0 rounded-2xl border border-white/10 bg-slate-950/50 p-4">
-          <p className="min-w-0 break-all text-sm text-slate-300">Uploaded key: {uploaded.s3Key}</p>
+        <div className="mt-4 min-w-0 rounded-2xl border border-neutral-300 bg-neutral-50 p-4">
+          <p className="min-w-0 break-all text-sm text-neutral-700">Uploaded key: {uploaded.s3Key}</p>
           {uploaded.url && uploaded.mimeType.startsWith('image/') && <img src={uploaded.url} alt={uploaded.alt ?? uploaded.filename} className="mt-3 max-h-48 rounded-2xl object-cover" />}
         </div>
       )}
@@ -1085,10 +1085,10 @@ function VideoForm({ record }: { record: ApiRecord }) {
 function VideoSummary({ record }: { record: ApiRecord }) {
   const video = isVideoAsset(record) ? record : null;
   return (
-    <div className="mt-2 grid min-w-0 gap-2 text-sm text-slate-400">
-      <p><span className="text-slate-500">youtubeVideoId: </span>{textValue(record.youtubeVideoId)}</p>
-      <p><span className="text-slate-500">category: </span>{textValue(record.category)}</p>
-      <p><span className="text-slate-500">caption: </span>{textValue(record.caption)}</p>
+    <div className="mt-2 grid min-w-0 gap-2 text-sm text-neutral-600">
+      <p><span className="text-neutral-500">youtubeVideoId: </span>{textValue(record.youtubeVideoId)}</p>
+      <p><span className="text-neutral-500">category: </span>{textValue(record.category)}</p>
+      <p><span className="text-neutral-500">caption: </span>{textValue(record.caption)}</p>
       {video?.thumbnailUrl && <img src={video.thumbnailUrl} alt={video.title} className="mt-2 max-h-36 rounded-2xl object-cover" />}
     </div>
   );
@@ -1279,8 +1279,8 @@ function HomepageManager() {
           <TextArea label="About text" name="aboutText" value={record.aboutText} required />
           <Field label="Meta title" name="metaTitle" value={record.metaTitle} required />
           <TextArea label="Meta description" name="metaDescription" value={record.metaDescription} required rows={3} />
-          <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/[.03] p-4">
-            <h3 className="text-lg font-black text-white">Homepage section headings</h3>
+          <div className="grid gap-4 rounded-[1.5rem] border border-neutral-300 bg-neutral-50 p-4">
+            <h3 className="text-lg font-black text-neutral-950">Homepage section headings</h3>
             <Field label="Timeline eyebrow" name="timelineEyebrow" value={record.timelineEyebrow} />
             <Field label="Timeline title" name="timelineTitle" value={record.timelineTitle} />
             <TextArea label="Timeline subtitle" name="timelineSubtitle" value={record.timelineSubtitle} rows={2} />
@@ -1346,15 +1346,15 @@ function ContactMessagesManager() {
   return (
     <div className="grid min-w-0 gap-5">
       <Status loading={loading} feedback={feedback} />
-      {messages.length === 0 && !loading && <Card><p className="text-slate-400">No contact messages found.</p></Card>}
+      {messages.length === 0 && !loading && <Card><p className="text-neutral-600">No contact messages found.</p></Card>}
       {messages.map(message => (
         <Card key={String(message.id)}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <Badge>{textValue(message.status)}</Badge>
-              <h2 className="mt-3 text-2xl font-black text-white">{textValue(message.subject)}</h2>
-              <p className="text-slate-400">{textValue(message.name)} · {textValue(message.email)}</p>
-              <p className="mt-3 whitespace-pre-wrap text-slate-300">{textValue(message.message)}</p>
+              <h2 className="mt-3 text-2xl font-black text-neutral-950">{textValue(message.subject)}</h2>
+              <p className="text-neutral-600">{textValue(message.name)} · {textValue(message.email)}</p>
+              <p className="mt-3 whitespace-pre-wrap text-neutral-700">{textValue(message.message)}</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <SecondaryButton onClick={() => message.id && update(message.id, 'READ')}>Mark read</SecondaryButton>
@@ -1700,12 +1700,12 @@ function CrudManager(props: CrudManagerProps) {
           <Status loading={loading} feedback={feedback} />
           <ActionButton onClick={() => { setSelected(null); setMode('create'); }}>New</ActionButton>
         </div>
-        {items.length === 0 && !loading && <Card><p className="text-slate-400">No records found.</p></Card>}
+        {items.length === 0 && !loading && <Card><p className="text-neutral-600">No records found.</p></Card>}
         {items.map(record => (
           <Card key={String(record.id)} className="min-w-0">
             <div className="flex min-w-0 flex-wrap items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
-                <h2 className="break-words text-xl font-black text-white sm:text-2xl">{textValue(recordTitle(record))}</h2>
+                <h2 className="break-words text-xl font-black text-neutral-950 sm:text-2xl">{textValue(recordTitle(record))}</h2>
                 {props.renderSummary(record)}
               </div>
               <div className="flex flex-wrap gap-2">
@@ -1718,7 +1718,7 @@ function CrudManager(props: CrudManagerProps) {
         {props.extraAction}
       </div>
       <Card className="min-w-0 overflow-hidden xl:sticky xl:top-24 xl:max-h-[calc(100vh-7rem)] xl:overflow-y-auto">
-        <h2 className="text-2xl font-black text-white">{mode === 'create' ? `New ${props.title}` : `Edit ${props.title}`}</h2>
+        <h2 className="text-2xl font-black text-neutral-950">{mode === 'create' ? `New ${props.title}` : `Edit ${props.title}`}</h2>
         <form key={`${mode}-${selected?.id ?? 'new'}`} onSubmit={(event) => { event.preventDefault(); void submit(new FormData(event.currentTarget)); }} className="mt-4 grid min-w-0 gap-4">
           {props.renderForm(current, mode)}
           <ActionButton type="submit">{props.submitLabel ?? 'Save'}</ActionButton>
@@ -1730,9 +1730,9 @@ function CrudManager(props: CrudManagerProps) {
 
 function RecordSummary({ record, fields }: { record: ApiRecord; fields: string[] }) {
   return (
-    <div className="mt-2 grid min-w-0 gap-1 text-sm text-slate-400">
+    <div className="mt-2 grid min-w-0 gap-1 text-sm text-neutral-600">
       {fields.map(field => (
-        <p key={field} className="min-w-0 break-words"><span className="text-slate-500">{field}: </span>{textValue(record[field])}</p>
+        <p key={field} className="min-w-0 break-words"><span className="text-neutral-500">{field}: </span>{textValue(record[field])}</p>
       ))}
     </div>
   );

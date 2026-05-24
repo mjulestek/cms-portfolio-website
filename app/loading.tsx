@@ -1,2 +1,1 @@
-import { SkeletonRows } from '@/components/ui/skeleton';
-export default function Loading(){ return <div className="mx-auto max-w-7xl px-6 py-12"><SkeletonRows /></div>; }
+export default function Loading(){ return <main className="app-container py-24"><div className="h-5 w-40 animate-pulse rounded-full bg-neutral-200"/><div className="mt-6 h-16 max-w-2xl animate-pulse rounded-2xl bg-neutral-200"/><div className="mt-10 grid gap-5 md:grid-cols-3"><div className="h-64 animate-pulse bg-neutral-200"/><div className="h-64 animate-pulse bg-neutral-200"/><div className="h-64 animate-pulse bg-neutral-200"/></div></main>; }

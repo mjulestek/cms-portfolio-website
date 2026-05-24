@@ -1,2 +1,7 @@
-'use client';
-export function YouTubeEmbed({videoId,title,onTrack}:{videoId:string;title:string;onTrack?:()=>void}){ if(!/^[a-zA-Z0-9_-]{11}$/.test(videoId)) return <div className="aspect-video rounded-3xl bg-white/5"/>; return <div className="relative aspect-video overflow-hidden rounded-3xl bg-slate-950"><iframe onLoad={onTrack} className="absolute inset-0 h-full w-full" src={`https://www.youtube.com/embed/${videoId}`} title={title} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen/></div> }
+export function YouTubeEmbed({ title, embedUrl }: { title: string; embedUrl: string }) {
+  return (
+    <div className="aspect-video overflow-hidden rounded-3xl border border-neutral-300 bg-neutral-100">
+      <iframe className="h-full w-full" src={embedUrl} title={title} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen />
+    </div>
+  );
+}

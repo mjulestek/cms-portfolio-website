@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { WritingSection } from '@/components/homepage/writing-section';
 import { assetUrlFromKey } from '@/lib/s3';
-import { getHomepageData, type HomepageCTAView, type HomepageTimelineItemView, type HomepageStackItemView, type FooterSettingsView, type SimpleLink } from '@/lib/homepage-data';
+import { getHomepageData, type HomepageCTAView, type HomepageTimelineItemView, type HomepageStackItemView } from '@/lib/homepage-data';
 import type { MappedProject } from '@/lib/mappers';
 
 export const dynamic = 'force-dynamic';
@@ -195,45 +195,6 @@ function StackSection({ stack, ctas, eyebrow, title, subtitle }: { stack: Homepa
   );
 }
 
-function DynamicFooter({ footer, navLinks, legalLinks, socials }: { footer: FooterSettingsView; navLinks: SimpleLink[]; legalLinks: SimpleLink[]; socials: SimpleLink[] }) {
-  const columns = Array.from(new Set(navLinks.map(link => link.column ?? 'Links')));
-  return (
-    <footer className="px-6 pb-16 pt-20 sm:px-10 lg:px-20">
-      <div className="grid gap-16 border border-black p-12 md:grid-cols-[1.2fr_1fr] lg:grid-cols-[1.4fr_1fr_1fr]">
-        <div>
-          <p className="font-serif text-4xl italic text-black">{footer.logoText}</p>
-          <div className="mt-12 space-y-8 text-lg text-black">
-            <div><p className="font-bold">Location</p><p className="mt-2">{footer.location}</p></div>
-            <div><p className="font-bold">Email</p><a href={`mailto:${footer.email}`} className="mt-2 block underline">{footer.email}</a>{footer.linkedInUrl && <a href={footer.linkedInUrl} target="_blank" rel="noreferrer" className="mt-1 block underline">{footer.linkedInUrl.replace(/^https?:\/\//, '')}</a>}</div>
-          </div>
-          <div className="mt-12 flex flex-wrap items-center gap-5">
-            {socials.map((link: SimpleLink) => (
-              <a key={link.id} href={link.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 font-bold underline-offset-4 hover:underline">
-                {link.iconUrl ? <img src={link.iconUrl} alt="" className="h-5 w-5 object-contain grayscale" /> : null}
-                <span>{link.platform ?? link.label}</span>
-              </a>
-            ))}
-          </div>
-        </div>
-        {columns.map(column => (
-          <div key={column}>
-            <p className="text-lg font-bold text-black">{column}</p>
-            <div className="mt-8 grid gap-6">
-              {navLinks.filter(link => (link.column ?? 'Links') === column).map(link => <InternalOrExternalLink key={link.id} href={link.url} className="text-lg font-semibold text-black hover:underline">{link.label}</InternalOrExternalLink>)}
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="mt-12 flex flex-col gap-8 text-lg text-black md:flex-row md:items-center md:justify-between">
-        <p>{footer.copyrightText}</p>
-        <div className="flex flex-wrap gap-8">
-          {legalLinks.map((link: { id: string; label: string; url: string; order: number }) => <InternalOrExternalLink key={link.id} href={link.url} className="underline">{link.label}</InternalOrExternalLink>)}
-        </div>
-      </div>
-    </footer>
-  );
-}
-
 export default async function Home() {
   const data = await getHomepageData();
   const heroHeadline = data.content?.heroHeadline ?? 'Infrastructure that scales from idea to production';
@@ -242,7 +203,7 @@ export default async function Home() {
   const primaryCta = { label: data.content?.ctaText ?? 'View projects', url: data.content?.ctaUrl ?? '/projects' };
 
   return (
-    <div className="relative z-10 bg-white text-black">
+    <div className="relative z-10 bg-[#f8f7f3] text-black">
       <section className="grid min-h-[86vh] items-center gap-12 px-6 py-24 sm:px-10 lg:grid-cols-[1.05fr_.95fr] lg:px-20">
         <div className="max-w-5xl">
           <p className="text-sm font-black uppercase tracking-[0.28em]">Cloud infrastructure portfolio</p>
@@ -266,7 +227,6 @@ export default async function Home() {
       <WritingSection posts={data.posts} categories={data.blogCategories} eyebrow={data.content?.writingEyebrow ?? 'Writing'} title={data.content?.writingTitle ?? 'Knowledge worth sharing'} subtitle={data.content?.writingSubtitle ?? 'Technical insights from the field.'} />
       <ProjectsSection projects={data.projects} eyebrow={data.content?.projectsEyebrow ?? 'Projects'} title={data.content?.projectsTitle ?? 'Work that scales'} subtitle={data.content?.projectsSubtitle ?? 'Infrastructure built for production demands.'} />
       <StackSection stack={data.stack} ctas={data.ctas} eyebrow={data.content?.stackEyebrow ?? 'Stack'} title={data.content?.stackTitle ?? 'Tools that power production infrastructure'} subtitle={data.content?.stackSubtitle ?? 'Built with technologies that handle real scale. Each tool chosen for reliability, not hype. The stack that runs the internet.'} />
-      <DynamicFooter footer={data.footer} navLinks={data.footerNav} legalLinks={data.legalLinks} socials={data.socials} />
     </div>
   );
 }

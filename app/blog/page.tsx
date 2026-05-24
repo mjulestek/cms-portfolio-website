@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Badge, Card, CardActionLabel, MediaPlaceholder } from '@/components/ui/card';
+import { Badge, Card, EmptyState, MediaPlaceholder, PageHeader } from '@/components/ui/card';
 import { prisma } from '@/lib/prisma';
 import { mapBlog, resolveBlogReferences } from '@/lib/mappers';
 
@@ -9,7 +9,7 @@ async function getPosts() {
   try {
     const posts = await prisma.blogPost.findMany({
       where: { status: 'PUBLISHED' },
-      orderBy: [{ publishedAt: 'desc' }, { createdAt: 'desc' }],
+      orderBy: [{ homepageOrder: 'asc' }, { publishedAt: 'desc' }, { createdAt: 'desc' }],
     });
     const resolvedPosts = await resolveBlogReferences(posts);
     return resolvedPosts.map(mapBlog);
@@ -19,61 +19,38 @@ async function getPosts() {
   }
 }
 
+function Arrow() { return <span aria-hidden="true" className="ml-2 transition group-hover:translate-x-1">›</span>; }
+
 export default async function Blog() {
   const posts = await getPosts();
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-      <div className="max-w-3xl">
-        <p className="text-sm font-bold uppercase tracking-[0.25em] text-cyan-300">Blog</p>
-        <h1 className="mt-3 text-4xl font-black tracking-tight text-white sm:text-5xl">Cloud engineering notes</h1>
-        <p className="mt-4 text-slate-400">Notes, tutorials, debugging logs, and practical lessons from building real systems.</p>
-      </div>
-
-      {posts.length === 0 ? (
-        <Card className="mt-8">
-          <p className="text-slate-400">No published posts yet.</p>
-        </Card>
-      ) : (
-        <div className="mt-8 grid items-stretch gap-5 md:grid-cols-2 xl:grid-cols-3">
-          {posts.map(post => (
-            <Link
-              href={`/blog/${post.slug}`}
-              key={post.id}
-              className="group block h-full focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70"
-            >
-              <Card className="flex h-full flex-col p-0 transition duration-300 group-hover:-translate-y-1 group-hover:border-cyan-300/30 group-hover:bg-white/[.07]">
-                <div className="h-52 w-full overflow-hidden rounded-t-3xl bg-slate-950/40">
-                  {post.coverImageUrl ? (
-                    <img
-                      src={post.coverImageUrl}
-                      alt={post.title}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <MediaPlaceholder label="Blog cover image missing" />
-                  )}
+    <div className="bg-[#f8f7f3] text-neutral-950">
+      <PageHeader eyebrow="Writing" title="Knowledge worth sharing" subtitle="Technical insights from the field: practical notes on cloud systems, automation, observability, and deployment work." />
+      <section className="app-container pb-20 lg:pb-28">
+        {posts.length === 0 ? (
+          <EmptyState title="No published posts yet" message="Publish blog posts from the admin dashboard to show them here." />
+        ) : (
+          <div className="grid gap-x-12 gap-y-14 lg:grid-cols-2">
+            {posts.map(post => (
+              <Link href={`/blog/${post.slug}`} key={post.id} className="group grid gap-8 focus-ring sm:grid-cols-[minmax(12rem,20rem)_1fr]">
+                <div className="h-60 bg-neutral-100 sm:h-full">
+                  {post.coverImageUrl ? <img src={post.coverImageUrl} alt={post.title} className="h-full w-full object-cover grayscale transition duration-500 group-hover:grayscale-0" /> : <MediaPlaceholder label="Article image" />}
                 </div>
-
-                <div className="flex flex-1 flex-col p-6">
-                  {post.tags.length > 0 && (
-                    <div className="mb-4 flex flex-wrap gap-2">
-                      {post.tags.map(tag => (
-                        <Badge key={tag.id}>{tag.name}</Badge>
-                      ))}
-                    </div>
-                  )}
-                  <h2 className="text-2xl font-black leading-tight text-white">{post.title}</h2>
-                  <p className="mt-3 line-clamp-3 text-slate-400">{post.excerpt}</p>
-                  <div className="mt-auto pt-6">
-                    <CardActionLabel>Read article</CardActionLabel>
+                <div className="flex min-h-60 flex-col py-2">
+                  <div className="flex flex-wrap gap-3">
+                    {post.category && <Badge>{post.category.name}</Badge>}
+                    <Badge>{post.readTime ?? '6 min read'}</Badge>
                   </div>
+                  <h2 className="mt-5 text-3xl font-black leading-tight">{post.title}</h2>
+                  <p className="mt-4 line-clamp-3 text-lg leading-8 text-neutral-700">{post.excerpt}</p>
+                  <span className="mt-auto pt-7 text-base font-black">{post.ctaLabel ?? 'Read more'}<Arrow /></span>
                 </div>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }

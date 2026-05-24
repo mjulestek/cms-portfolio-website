@@ -1,2 +1,20 @@
 import { ContactForm } from '@/components/contact-form';
-export default function Contact(){ return <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-cyan-300">Contact</p><h1 className="mt-2 text-5xl font-black text-white">Let’s build reliable infrastructure</h1><p className="mt-4 text-slate-400">A polished contact experience backed by validation and persisted messages.</p></div><ContactForm/></div> }
+
+export default function Contact() {
+  return (
+    <div className="bg-[#f8f7f3] text-neutral-950">
+      <section className="app-container grid gap-10 py-12 sm:py-16 lg:grid-cols-[.85fr_1.15fr] lg:py-24">
+        <div>
+          <p className="eyebrow">Contact</p>
+          <h1 className="page-title">Let’s build reliable infrastructure</h1>
+          <p className="lead">Reach out for cloud engineering, CMS builds, deployment systems, or production debugging work.</p>
+          <div className="mt-10 grid gap-4 border-l-2 border-neutral-950 pl-6 text-neutral-700">
+            <p><span className="font-black text-neutral-950">Email:</span> mjules.tek@gmail.com</p>
+            <p><span className="font-black text-neutral-950">Focus:</span> Next.js, AWS, DevOps, CMS, CI/CD</p>
+          </div>
+        </div>
+        <ContactForm />
+      </section>
+    </div>
+  );
+}

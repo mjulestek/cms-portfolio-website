@@ -1,62 +1,22 @@
-'use client';
+import { YouTubeEmbed } from '@/components/videos/youtube-embed';
+import type { MappedVideo } from '@/lib/mappers';
 
-import { useMemo, useState } from 'react';
-import { YouTubeEmbed } from './youtube-embed';
-
-type VideoItem = {
-  video: {
-    id: string;
-    youtubeVideoId: string;
-    title: string;
-    thumbnailUrl: string;
-    caption?: string | null;
-  };
-};
-
-export function VideoGallery({ items }: { items: VideoItem[] }) {
-  const firstVideo = items[0]?.video;
-  const [activeId, setActiveId] = useState(firstVideo?.id ?? '');
-
-  const active = useMemo(
-    () => items.find(item => item.video.id === activeId)?.video ?? firstVideo,
-    [activeId, firstVideo, items],
-  );
-
-  if (!active) return null;
-
+export function VideoGallery({ items }: { items: Array<{ video: MappedVideo }> }) {
+  if (!items.length) return null;
+  const [featured, ...rest] = items;
   return (
-    <section className="grid gap-4">
-      <YouTubeEmbed videoId={active.youtubeVideoId} title={active.title} />
-      {active.caption && <p className="text-sm text-slate-400">{active.caption}</p>}
-
-      {items.length > 1 && (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {items.map(({ video }) => {
-            const isActive = video.id === active.id;
-            return (
-              <button
-                key={video.id}
-                type="button"
-                onClick={() => setActiveId(video.id)}
-                className={`group rounded-2xl border p-3 text-left transition duration-200 ${
-                  isActive
-                    ? 'border-cyan-300/40 bg-cyan-300/10'
-                    : 'border-white/10 bg-white/5 hover:border-cyan-300/30 hover:bg-white/[.08]'
-                }`}
-              >
-                <div className="overflow-hidden rounded-xl bg-slate-950/50">
-                  <img
-                    src={video.thumbnailUrl}
-                    alt={video.title}
-                    className="h-24 w-full object-cover transition duration-300 group-hover:scale-105"
-                  />
-                </div>
-                <p className="mt-3 line-clamp-2 text-sm font-bold text-white">{video.title}</p>
-              </button>
-            );
-          })}
+    <div className="grid gap-4">
+      <YouTubeEmbed title={featured.video.title} embedUrl={featured.video.embedUrl} />
+      {rest.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {rest.map(item => (
+            <div key={item.video.id} className="rounded-2xl border border-neutral-300 bg-white p-3">
+              {item.video.thumbnailUrl ? <img src={item.video.thumbnailUrl} alt={item.video.title} className="h-32 w-full rounded-xl object-cover grayscale" /> : null}
+              <p className="mt-3 text-sm font-black text-neutral-950">{item.video.title}</p>
+            </div>
+          ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }
