@@ -602,7 +602,12 @@ function MediaUploader({
         body: file,
       });
 
-      if (!uploadRes.ok) throw new Error(`S3 upload failed with ${uploadRes.status}`);
+      if (!uploadRes.ok) {
+  const errorText = await uploadRes.text().catch(() => '');
+  throw new Error(
+    `S3 upload failed with ${uploadRes.status}: ${errorText.slice(0, 800)}`
+  );
+}
 
       const mediaType = file.type === 'application/pdf'
         ? 'PDF'
