@@ -1,0 +1,2 @@
+import { NextResponse } from 'next/server';import { prisma } from '@/lib/prisma';import { requireAdmin } from '@/lib/admin-auth';import { handleApiError } from '@/lib/api-errors';
+export const dynamic = 'force-dynamic';export async function GET(){try{const auth=await requireAdmin();if(!auth.ok)return auth.response;const messages=await prisma.contactMessage.findMany({orderBy:{createdAt:'desc'}});return NextResponse.json({messages});}catch(e){return handleApiError(e)}}

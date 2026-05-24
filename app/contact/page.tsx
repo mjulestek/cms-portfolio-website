@@ -1,0 +1,2 @@
+import { ContactForm } from '@/components/contact-form';
+export default function Contact(){ return <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 lg:grid-cols-[.8fr_1.2fr]"><div><p className="text-cyan-300">Contact</p><h1 className="mt-2 text-5xl font-black text-white">Let’s build reliable infrastructure</h1><p className="mt-4 text-slate-400">A polished contact experience backed by validation and persisted messages.</p></div><ContactForm/></div> }

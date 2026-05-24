@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+:root { color-scheme: dark; }
+html { scroll-behavior: smooth; }
+body { background:#050814; color:#f8fafc; }
+* { box-sizing:border-box; }
+::selection { background:rgba(103,232,249,.3); }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
+}

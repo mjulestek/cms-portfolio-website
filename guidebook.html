@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio CMS Deployment Guide</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    :root {
+      --bg: #050816;
+      --panel: rgba(255,255,255,.07);
+      --panel-2: rgba(255,255,255,.105);
+      --border: rgba(255,255,255,.14);
+      --text: #f8fafc;
+      --muted: #a7b4c8;
+      --cyan: #22d3ee;
+      --blue: #60a5fa;
+      --purple: #a78bfa;
+      --orange: #fb923c;
+      --green: #34d399;
+      --red: #fb7185;
+      --mono: "JetBrains Mono", monospace;
+      --shadow: 0 30px 80px rgba(0,0,0,.38);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; scroll-behavior: smooth; }
+
+    body {
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(34,211,238,.20), transparent 32%),
+        radial-gradient(circle at 94% 6%, rgba(251,146,60,.16), transparent 32%),
+        radial-gradient(circle at 80% 86%, rgba(167,139,250,.18), transparent 36%),
+        radial-gradient(circle at 16% 92%, rgba(52,211,153,.13), transparent 34%),
+        var(--bg);
+      line-height: 1.65;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: -1;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 54px 54px;
+      mask-image: linear-gradient(to bottom, black, transparent 78%);
+    }
+
+    .shell { max-width: 1220px; margin: 0 auto; padding: 28px 20px 70px; }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      border-radius: 36px;
+      padding: clamp(34px, 5vw, 64px);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,.14), rgba(255,255,255,.045)),
+        radial-gradient(circle at 85% 14%, rgba(251,146,60,.18), transparent 34%);
+      box-shadow: var(--shadow);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      width: 450px;
+      height: 450px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(34,211,238,.42), rgba(251,146,60,.28), rgba(167,139,250,.34));
+      filter: blur(65px);
+      right: -150px;
+      top: -145px;
+      opacity: .72;
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 940px; }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 15px;
+      border: 1px solid rgba(34,211,238,.38);
+      background: rgba(34,211,238,.10);
+      color: #cffafe;
+      border-radius: 999px;
+      font-weight: 850;
+      margin-bottom: 22px;
+      font-size: .95rem;
+    }
+
+    h1 {
+      font-size: clamp(2.25rem, 6vw, 5rem);
+      line-height: .96;
+      letter-spacing: -0.075em;
+      font-weight: 900;
+      margin-bottom: 22px;
+    }
+
+    .gradient-text {
+      background: linear-gradient(90deg, var(--cyan), var(--orange), var(--purple), var(--green));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    .lead { color: #dbeafe; font-size: clamp(1.02rem, 2vw, 1.18rem); max-width: 850px; }
+
+    .pills, .button-row { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+    .pill, .button {
+      display: inline-flex;
+      align-items: center;
+      gap: 9px;
+      padding: 10px 14px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.075);
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 800;
+      font-size: .94rem;
+    }
+
+    .button { background: linear-gradient(135deg, rgba(34,211,238,.18), rgba(167,139,250,.14)); }
+    .button:hover { background: rgba(255,255,255,.13); transform: translateY(-1px); }
+
+    .layout { display: grid; grid-template-columns: 275px 1fr; gap: 22px; margin-top: 24px; align-items: start; }
+
+    .toc {
+      position: sticky;
+      top: 18px;
+      max-height: calc(100vh - 36px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 26px;
+      background: rgba(255,255,255,.06);
+      backdrop-filter: blur(18px);
+    }
+
+    .toc h3 { font-size: .86rem; letter-spacing: .13em; text-transform: uppercase; color: #e0f2fe; margin-bottom: 12px; }
+    .toc a { display: flex; gap: 9px; align-items: center; text-decoration: none; color: var(--muted); padding: 8px 9px; border-radius: 12px; font-size: .88rem; font-weight: 750; }
+    .toc a:hover { color: var(--text); background: rgba(255,255,255,.08); }
+
+    .main { min-width: 0; }
+
+    .section {
+      margin-top: 24px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      border-radius: 30px;
+      padding: clamp(22px, 4vw, 32px);
+      box-shadow: 0 18px 45px rgba(0,0,0,.20);
+      backdrop-filter: blur(18px);
+    }
+
+    .section-title { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+    .bubble { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 16px; background: linear-gradient(135deg, rgba(34,211,238,.24), rgba(251,146,60,.19), rgba(167,139,250,.20)); border: 1px solid var(--border); color: var(--cyan); font-size: 1.15rem; flex: 0 0 auto; }
+
+    h2 { font-size: clamp(1.35rem, 3vw, 1.8rem); letter-spacing: -.045em; }
+    h3 { color: #e0f2fe; font-size: 1.06rem; margin-bottom: 6px; }
+    p { color: var(--muted); margin-top: 6px; }
+    strong { color: var(--text); }
+    ul, ol { color: var(--muted); margin: 12px 0 0 22px; }
+    li { margin: 7px 0; }
+
+    .architecture { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr; gap: 12px; align-items: center; }
+    .node { min-height: 132px; display: grid; place-items: center; text-align: center; padding: 18px; border-radius: 24px; background: rgba(255,255,255,.078); border: 1px solid var(--border); }
+    .node i { font-size: 2.1rem; margin-bottom: 8px; color: var(--cyan); }
+    .arrow { color: var(--cyan); font-size: 1.7rem; text-align: center; }
+
+    .flow-strip { margin-top: 16px; padding: 16px 18px; border-left: 4px solid var(--cyan); background: rgba(34,211,238,.075); border-radius: 17px; color: #dffbff; overflow-x: auto; }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(225px, 1fr)); gap: 12px; }
+    .card { display: flex; gap: 13px; align-items: flex-start; padding: 17px; border-radius: 22px; background: rgba(255,255,255,.07); border: 1px solid var(--border); }
+    .card i { font-size: 1.45rem; color: var(--cyan); width: 26px; text-align: center; flex: 0 0 auto; margin-top: 3px; }
+
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; counter-reset: step; }
+    .step { padding: 18px; border-radius: 22px; background: rgba(255,255,255,.07); border: 1px solid var(--border); min-height: 150px; }
+    .step::before { counter-increment: step; content: counter(step, decimal-leading-zero); display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 13px; margin-bottom: 12px; background: linear-gradient(135deg, var(--cyan), var(--orange), var(--purple)); color: #020617; font-weight: 900; }
+
+    .callout { margin-top: 14px; padding: 16px 18px; border-radius: 18px; border: 1px solid rgba(34,211,238,.25); background: rgba(34,211,238,.075); color: #dffbff; }
+    .warning { border-color: rgba(251,146,60,.30); background: rgba(251,146,60,.085); }
+    .success { border-color: rgba(52,211,153,.28); background: rgba(52,211,153,.075); }
+
+    details { margin-top: 12px; border-radius: 21px; border: 1px solid var(--border); background: rgba(255,255,255,.055); overflow: hidden; }
+    summary { cursor: pointer; padding: 17px 20px; color: #e0f2fe; font-weight: 850; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+    summary::after { content: "+"; float: right; color: var(--cyan); font-size: 1.2rem; }
+    details[open] summary::after { content: "−"; }
+    .details-body { padding: 0 20px 20px; }
+
+    code, pre { font-family: var(--mono); }
+    code.inline { color: #cffafe; background: rgba(34,211,238,.10); border: 1px solid rgba(34,211,238,.20); border-radius: 8px; padding: 2px 7px; white-space: nowrap; }
+    pre { position: relative; overflow-x: auto; margin-top: 12px; padding: 17px; border-radius: 17px; border: 1px solid rgba(255,255,255,.12); background: rgba(2,6,23,.88); color: #cffafe; font-size: .84rem; line-height: 1.58; }
+    .copy-btn { position: absolute; top: 10px; right: 10px; border: 1px solid rgba(255,255,255,.18); background: rgba(255,255,255,.08); color: #e0f2fe; border-radius: 10px; padding: 6px 9px; font-weight: 800; cursor: pointer; }
+
+    table { width: 100%; border-collapse: collapse; overflow: hidden; border-radius: 18px; margin-top: 14px; border: 1px solid var(--border); }
+    th, td { padding: 13px 14px; text-align: left; border-bottom: 1px solid rgba(255,255,255,.09); color: var(--muted); vertical-align: top; }
+    th { color: var(--text); background: rgba(255,255,255,.085); font-size: .92rem; }
+    tr:last-child td { border-bottom: none; }
+
+    .signature { margin-top: 26px; padding: 32px; border-radius: 30px; border: 1px solid rgba(34,211,238,.25); background: linear-gradient(135deg, rgba(34,211,238,.12), rgba(251,146,60,.08), rgba(167,139,250,.12)); text-align: center; }
+    .signature-name { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 900; letter-spacing: -.05em; background: linear-gradient(90deg, #67e8f9, #fb923c, #a78bfa, #34d399); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .footer { margin-top: 22px; text-align: center; color: var(--muted); font-size: .92rem; }
+
+    @media (max-width: 1000px) {
+      .layout { grid-template-columns: 1fr; }
+      .toc { position: relative; top: 0; max-height: none; }
+      .architecture { grid-template-columns: 1fr; }
+      .arrow { transform: rotate(90deg); }
+    }
+
+    @media print {
+      body { background: #fff; color: #111827; }
+      body::before { display: none; }
+      .hero, .section, .toc, .card, .step, details, .signature { background: #fff; color: #111827; box-shadow: none; border-color: #d1d5db; }
+      p, li, td { color: #374151; }
+      h1, h2, h3, th, strong { color: #111827; }
+      .gradient-text, .signature-name { color: #111827; background: none; }
+      pre { background: #111827; color: #e5e7eb; }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="hero-content">
+        <div class="eyebrow"><i class="fa-solid fa-rocket"></i> Portfolio CMS Production Deployment</div>
+        <h1>Deploy a <span class="gradient-text">Next.js CMS</span> with GitHub Actions, ECR, EC2, Atlas, S3 & CloudFront</h1>
+        <p class="lead">A straight, beginner-friendly MVP guide for rebuilding this project later from scratch: local Docker testing, production image builds, ECR registry, EC2 Docker Compose deployment, MongoDB Atlas, S3 storage, and CloudFront file delivery.</p>
+        <div class="pills">
+          <span class="pill"><i class="fa-brands fa-github"></i> GitHub Actions</span>
+          <span class="pill"><i class="fa-brands fa-docker"></i> Docker</span>
+          <span class="pill"><i class="fa-brands fa-aws"></i> AWS ECR + EC2</span>
+          <span class="pill"><i class="fa-solid fa-database"></i> MongoDB Atlas</span>
+          <span class="pill"><i class="fa-solid fa-cloud"></i> S3 + CloudFront</span>
+        </div>
+        <div class="button-row">
+          <a class="button" href="#architecture"><i class="fa-solid fa-diagram-project"></i> Architecture</a>
+          <a class="button" href="#workflow"><i class="fa-brands fa-github"></i> Workflow YAML</a>
+          <a class="button" href="#secrets"><i class="fa-solid fa-key"></i> Secrets</a>
+          <a class="button" href="#troubleshooting"><i class="fa-solid fa-wrench"></i> Troubleshooting</a>
+          <a class="button" href="javascript:window.print()"><i class="fa-solid fa-print"></i> Print / PDF</a>
+        </div>
+      </div>
+    </section>
+
+    <div class="layout">
+      <aside class="toc">
+        <h3>Contents</h3>
+        <a href="#architecture"><i class="fa-solid fa-diagram-project"></i> Architecture</a>
+        <a href="#files"><i class="fa-solid fa-folder-tree"></i> Project Files</a>
+        <a href="#docker"><i class="fa-brands fa-docker"></i> Dockerfile</a>
+        <a href="#local"><i class="fa-solid fa-laptop-code"></i> Local Docker</a>
+        <a href="#atlas"><i class="fa-solid fa-database"></i> MongoDB Atlas</a>
+        <a href="#s3"><i class="fa-solid fa-cloud"></i> S3 + CloudFront</a>
+        <a href="#ecr"><i class="fa-brands fa-aws"></i> ECR</a>
+        <a href="#ec2"><i class="fa-solid fa-server"></i> EC2</a>
+        <a href="#secrets"><i class="fa-solid fa-key"></i> GitHub Secrets</a>
+        <a href="#workflow"><i class="fa-brands fa-github"></i> Workflow</a>
+        <a href="#seed"><i class="fa-solid fa-seedling"></i> Seed</a>
+        <a href="#testing"><i class="fa-solid fa-check-double"></i> Testing</a>
+        <a href="#troubleshooting"><i class="fa-solid fa-screwdriver-wrench"></i> Fixes</a>
+        <a href="#next"><i class="fa-solid fa-forward"></i> Next Steps</a>
+      </aside>
+
+      <div class="main">
+        <section id="architecture" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-diagram-project"></i></div><h2>1. Final Architecture</h2></div>
+          <div class="architecture">
+            <div class="node"><div><i class="fa-brands fa-github"></i><h3>GitHub</h3><p>Source code and workflow</p></div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div><i class="fa-solid fa-gears"></i><h3>Actions</h3><p>Builds and deploys</p></div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div><i class="fa-brands fa-aws"></i><h3>ECR</h3><p>Stores Docker image</p></div></div>
+            <div class="arrow">→</div>
+            <div class="node"><div><i class="fa-solid fa-server"></i><h3>EC2</h3><p>Runs app container</p></div></div>
+          </div>
+          <div class="flow-strip"><strong>Full flow:</strong> git push → GitHub Actions → Docker build → ECR push → SSH to EC2 → ECR pull → Docker Compose restart → MongoDB Atlas connection → live app.</div>
+          <div class="grid" style="margin-top:16px">
+            <div class="card"><i class="fa-solid fa-database"></i><div><h3>MongoDB Atlas</h3><p>Production database. Do not run production MongoDB inside EC2.</p></div></div>
+            <div class="card"><i class="fa-solid fa-bucket"></i><div><h3>S3</h3><p>Stores uploaded media, resumes, images, icons, and PDFs.</p></div></div>
+            <div class="card"><i class="fa-solid fa-cloud"></i><div><h3>CloudFront</h3><p>Serves S3 files quickly. The full app can be placed behind CloudFront later.</p></div></div>
+            <div class="card"><i class="fa-solid fa-lock"></i><div><h3>Secrets</h3><p>Production values live in GitHub Secrets and are passed during deployment.</p></div></div>
+          </div>
+        </section>
+
+        <section id="files" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-folder-tree"></i></div><h2>2. Project Files</h2></div>
+          <p>Keep the structure simple and focused.</p>
+          <pre><code>app/
+components/
+lib/
+prisma/
+public/
+Dockerfile
+package.json
+next.config.mjs
+middleware.ts
+.github/workflows/deploy.yml</code></pre>
+          <div class="callout success"><strong>Simple rule:</strong> pages and route handlers stay in <code class="inline">app/</code>, reusable UI stays in <code class="inline">components/</code>, helpers stay in <code class="inline">lib/</code>, and Prisma stays in <code class="inline">prisma/</code>.</div>
+        </section>
+
+        <section id="docker" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-brands fa-docker"></i></div><h2>3. Production Dockerfile</h2></div>
+          <p>This Dockerfile is for the image GitHub Actions builds and pushes to ECR.</p>
+          <pre><code>FROM node:20-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache openssl libc6-compat
+
+ENV PRISMA_CLI_BINARY_TARGETS=linux-musl-openssl-3.0.x
+
+COPY package*.json ./
+RUN npm install
+
+COPY . .
+
+RUN npx prisma generate
+RUN npm run build
+
+EXPOSE 3000
+
+CMD ["npm", "start"]</code></pre>
+          <div class="callout"><strong>Prisma note:</strong> In <code class="inline">prisma/schema.prisma</code>, use <code class="inline">binaryTargets = ["native", "linux-musl-openssl-3.0.x"]</code> for Alpine.</div>
+        </section>
+
+        <section id="local" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-laptop-code"></i></div><h2>4. Local Docker Testing</h2></div>
+          <p>For local development, MongoDB can run in Docker with replica set mode because Prisma MongoDB transactions need it.</p>
+          <details open><summary>Local commands</summary><div class="details-body">
+            <pre><code>docker compose down -v --remove-orphans
+docker compose up -d --build
+docker compose exec mongodb mongosh --eval "rs.initiate({_id:'rs0',members:[{_id:0,host:'mongodb:27017'}]})"
+docker compose exec my-app npx prisma db push
+docker compose exec my-app npm run db:seed</code></pre>
+            <p>Then open:</p>
+            <pre><code>http://localhost:3000</code></pre>
+          </div></details>
+        </section>
+
+        <section id="atlas" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-database"></i></div><h2>5. MongoDB Atlas</h2></div>
+          <ol>
+            <li>Create a MongoDB Atlas cluster.</li>
+            <li>Create a database user.</li>
+            <li>Add the EC2 public IP in Network Access.</li>
+            <li>Copy the connection string.</li>
+          </ol>
+          <div class="callout warning"><strong>Important:</strong> the database name must be inside the URL.</div>
+          <p>Wrong:</p>
+          <pre><code>mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/?retryWrites=true&w=majority</code></pre>
+          <p>Correct:</p>
+          <pre><code>mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/jules_portfolio_cms?retryWrites=true&w=majority</code></pre>
+        </section>
+
+        <section id="s3" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-cloud"></i></div><h2>6. S3 + CloudFront</h2></div>
+          <div class="grid">
+            <div class="card"><i class="fa-solid fa-bucket"></i><div><h3>S3 Bucket</h3><p>Create <code class="inline">jules-portfolio-cms-assets</code>. Keep Block Public Access ON.</p></div></div>
+            <div class="card"><i class="fa-solid fa-cloud-arrow-up"></i><div><h3>CloudFront</h3><p>Create a distribution pointing to the S3 bucket.</p></div></div>
+            <div class="card"><i class="fa-solid fa-key"></i><div><h3>IAM Access</h3><p>The app needs S3 access keys for uploads and signed download flows.</p></div></div>
+          </div>
+          <pre><code>S3_BUCKET_NAME=jules-portfolio-cms-assets
+CLOUDFRONT_DOMAIN=d31af4uwi2oj57.cloudfront.net</code></pre>
+        </section>
+
+        <section id="ecr" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-brands fa-aws"></i></div><h2>7. Amazon ECR</h2></div>
+          <ol>
+            <li>Create an ECR repository.</li>
+            <li>Name it <code class="inline">jules-portfolio-cms</code>.</li>
+            <li>Give your GitHub Actions IAM user ECR permission.</li>
+          </ol>
+          <pre><code>AmazonEC2ContainerRegistryPowerUser</code></pre>
+          <p>Image URI format:</p>
+          <pre><code>AWS_ACCOUNT_ID.dkr.ecr.AWS_REGION.amazonaws.com/jules-portfolio-cms:latest</code></pre>
+        </section>
+
+        <section id="ec2" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-server"></i></div><h2>8. EC2 Server</h2></div>
+          <p>Use Ubuntu, a 30 GB disk, and open the required ports.</p>
+          <table>
+            <thead><tr><th>Port</th><th>Purpose</th><th>Source</th></tr></thead>
+            <tbody>
+              <tr><td>22</td><td>SSH</td><td>Your IP, or 0.0.0.0/0 for learning</td></tr>
+              <tr><td>3000</td><td>App</td><td>0.0.0.0/0</td></tr>
+              <tr><td>80</td><td>HTTP later</td><td>0.0.0.0/0</td></tr>
+              <tr><td>443</td><td>HTTPS later</td><td>0.0.0.0/0</td></tr>
+            </tbody>
+          </table>
+          <details open><summary>Install Docker and AWS CLI</summary><div class="details-body">
+            <pre><code>sudo apt update -y
+sudo apt install -y docker.io docker-compose-plugin awscli
+sudo systemctl enable docker
+sudo systemctl start docker
+sudo usermod -aG docker ubuntu</code></pre>
+            <p>Exit and SSH again, then check:</p>
+            <pre><code>docker --version
+docker compose version
+aws --version</code></pre>
+          </div></details>
+          <div class="callout"><strong>EC2 role:</strong> attach an IAM role with <code class="inline">AmazonEC2ContainerRegistryReadOnly</code> so EC2 can pull images from ECR.</div>
+        </section>
+
+        <section id="secrets" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-key"></i></div><h2>9. GitHub Secrets</h2></div>
+          <p>Go to <strong>GitHub → Repo → Settings → Secrets and variables → Actions</strong>.</p>
+          <table>
+            <thead><tr><th>Group</th><th>Secrets</th></tr></thead>
+            <tbody>
+              <tr><td>AWS / ECR</td><td><code class="inline">AWS_ACCESS_KEY_ID</code>, <code class="inline">AWS_SECRET_ACCESS_KEY</code>, <code class="inline">AWS_REGION</code>, <code class="inline">AWS_ACCOUNT_ID</code>, <code class="inline">ECR_REPOSITORY_NAME</code></td></tr>
+              <tr><td>EC2</td><td><code class="inline">EC2_HOST_PUBLIC_ip</code>, <code class="inline">EC2_USER</code>, <code class="inline">EC2_SSH_KEY</code>, <code class="inline">EC2_PROJECT_PATH</code></td></tr>
+              <tr><td>App</td><td><code class="inline">DATABASE_URL</code>, <code class="inline">NEXTAUTH_URL</code>, <code class="inline">NEXTAUTH_SECRET</code>, <code class="inline">ADMIN_EMAIL</code>, <code class="inline">ADMIN_AUTH_BYPASS</code>, <code class="inline">EMAIL_SERVER</code>, <code class="inline">EMAIL_FROM</code>, <code class="inline">S3_BUCKET_NAME</code>, <code class="inline">CLOUDFRONT_DOMAIN</code>, <code class="inline">NEXT_PUBLIC_SITE_URL</code></td></tr>
+            </tbody>
+          </table>
+          <pre><code>EC2_PROJECT_PATH=/home/ubuntu/portfolio-website
+ADMIN_AUTH_BYPASS=false
+NEXTAUTH_URL=http://EC2_PUBLIC_IP:3000
+NEXT_PUBLIC_SITE_URL=http://EC2_PUBLIC_IP:3000</code></pre>
+        </section>
+
+        <section id="workflow" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-brands fa-github"></i></div><h2>10. GitHub Actions Workflow</h2></div>
+          <p>Create <code class="inline">.github/workflows/deploy.yml</code>.</p>
+          <details open><summary>Full MVP deploy workflow</summary><div class="details-body">
+<pre><code>name: Deploy
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-push:
+    name: Build and push image to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Login to AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Login to ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        run: |
+          IMAGE="${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com/${{ secrets.ECR_REPOSITORY_NAME }}:latest"
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+
+  deploy-to-ec2:
+    name: Pull image and run on EC2
+    runs-on: ubuntu-latest
+    needs: build-and-push
+
+    steps:
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        env:
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          AWS_ACCOUNT_ID: ${{ secrets.AWS_ACCOUNT_ID }}
+          ECR_REPOSITORY_NAME: ${{ secrets.ECR_REPOSITORY_NAME }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+          NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+          ADMIN_EMAIL: ${{ secrets.ADMIN_EMAIL }}
+          ADMIN_AUTH_BYPASS: ${{ secrets.ADMIN_AUTH_BYPASS }}
+          EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          CLOUDFRONT_DOMAIN: ${{ secrets.CLOUDFRONT_DOMAIN }}
+          NEXT_PUBLIC_SITE_URL: ${{ secrets.NEXT_PUBLIC_SITE_URL }}
+
+        with:
+          host: ${{ secrets.EC2_HOST_PUBLIC_ip }}
+          username: ${{ secrets.EC2_USER }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: AWS_REGION,AWS_ACCOUNT_ID,ECR_REPOSITORY_NAME,DATABASE_URL,NEXTAUTH_URL,NEXTAUTH_SECRET,ADMIN_EMAIL,ADMIN_AUTH_BYPASS,EMAIL_SERVER,EMAIL_FROM,S3_BUCKET_NAME,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,CLOUDFRONT_DOMAIN,NEXT_PUBLIC_SITE_URL
+
+          script: |
+            set -e
+            APP_DIR="${{ secrets.EC2_PROJECT_PATH }}"
+            IMAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$ECR_REPOSITORY_NAME:latest"
+
+            if ! mkdir -p "$APP_DIR" 2>/dev/null; then
+              sudo mkdir -p "$APP_DIR"
+              sudo chown "$USER:$USER" "$APP_DIR"
+            fi
+
+            cd "$APP_DIR"
+
+            aws ecr get-login-password --region "$AWS_REGION" \
+              | docker login --username AWS --password-stdin "$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com"
+
+            docker compose down || true
+
+            cat &gt; docker-compose.yml &lt;&lt;EOF
+            services:
+              my-app:
+                image: "$IMAGE"
+                container_name: jules_portfolio_app
+                ports:
+                  - "3000:3000"
+                environment:
+                  NODE_ENV: "production"
+                  DATABASE_URL: "$DATABASE_URL"
+                  NEXTAUTH_URL: "$NEXTAUTH_URL"
+                  NEXTAUTH_SECRET: "$NEXTAUTH_SECRET"
+                  ADMIN_EMAIL: "$ADMIN_EMAIL"
+                  ADMIN_AUTH_BYPASS: "$ADMIN_AUTH_BYPASS"
+                  EMAIL_SERVER: "$EMAIL_SERVER"
+                  EMAIL_FROM: "$EMAIL_FROM"
+                  AWS_REGION: "$AWS_REGION"
+                  S3_BUCKET_NAME: "$S3_BUCKET_NAME"
+                  AWS_ACCESS_KEY_ID: "$AWS_ACCESS_KEY_ID"
+                  AWS_SECRET_ACCESS_KEY: "$AWS_SECRET_ACCESS_KEY"
+                  CLOUDFRONT_DOMAIN: "$CLOUDFRONT_DOMAIN"
+                  NEXT_PUBLIC_SITE_URL: "$NEXT_PUBLIC_SITE_URL"
+                restart: unless-stopped
+            EOF
+
+            docker image prune -a -f || true
+            docker builder prune -f || true
+            docker compose pull
+            docker compose up -d
+            docker compose exec -T my-app npx prisma db push</code></pre>
+          </div></details>
+        </section>
+
+        <section id="seed" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-seedling"></i></div><h2>11. First Deployment + Seed</h2></div>
+          <pre><code>git add .
+git commit -m "Add production deployment workflow"
+git push origin main</code></pre>
+          <p>Watch the pipeline in GitHub Actions. After it succeeds, run seed once:</p>
+          <pre><code>ssh -i your-key.pem ubuntu@EC2_PUBLIC_IP
+cd /home/ubuntu/portfolio-website
+docker compose exec my-app npm run db:seed</code></pre>
+          <div class="callout warning"><strong>Do not run seed every deployment.</strong> Seed is for first setup only.</div>
+        </section>
+
+        <section id="testing" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-check-double"></i></div><h2>12. Test the Live App</h2></div>
+          <pre><code>http://EC2_PUBLIC_IP:3000
+http://EC2_PUBLIC_IP:3000/projects
+http://EC2_PUBLIC_IP:3000/blog
+http://EC2_PUBLIC_IP:3000/contact
+http://EC2_PUBLIC_IP:3000/login
+http://EC2_PUBLIC_IP:3000/admin/dashboard</code></pre>
+          <p>Check logs:</p>
+          <pre><code>ssh -i your-key.pem ubuntu@EC2_PUBLIC_IP
+docker ps
+docker logs -f jules_portfolio_app</code></pre>
+        </section>
+
+        <section id="troubleshooting" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-screwdriver-wrench"></i></div><h2>13. Common Errors and Fixes</h2></div>
+          <details open><summary>ECR authorization token</summary><div class="details-body"><pre><code>not authorized to perform: ecr:GetAuthorizationToken</code></pre><p>Attach <code class="inline">AmazonEC2ContainerRegistryPowerUser</code> to the GitHub Actions IAM user.</p></div></details>
+          <details><summary>SSH timeout</summary><div class="details-body"><pre><code>dial tcp EC2_IP:22: i/o timeout</code></pre><p>Open inbound port 22 in the EC2 Security Group.</p></div></details>
+          <details><summary>Permission denied creating folder</summary><div class="details-body"><pre><code>EC2_PROJECT_PATH=/home/ubuntu/portfolio-website</code></pre></div></details>
+          <details><summary>IMAGE variable not set</summary><div class="details-body"><p>Use <code class="inline">image: "$IMAGE"</code> in the generated compose file, not <code class="inline">image: ${IMAGE}</code>.</p></div></details>
+          <details><summary>No space left on device</summary><div class="details-body"><pre><code>docker system prune -a -f
+docker volume prune -f
+df -h</code></pre><p>Better long-term fix: use a 30 GB EC2 disk.</p></div></details>
+          <details><summary>MongoDB URL missing database name</summary><div class="details-body"><p>Correct URL:</p><pre><code>mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/jules_portfolio_cms?retryWrites=true&w=majority</code></pre></div></details>
+        </section>
+
+        <section id="next" class="section">
+          <div class="section-title"><div class="bubble"><i class="fa-solid fa-forward"></i></div><h2>14. Later Improvements</h2></div>
+          <div class="grid">
+            <div class="card"><i class="fa-solid fa-lock"></i><div><h3>HTTPS</h3><p>Add a domain and SSL certificate.</p></div></div>
+            <div class="card"><i class="fa-solid fa-network-wired"></i><div><h3>Nginx or Load Balancer</h3><p>Proxy cleanly from port 80/443 to the container.</p></div></div>
+            <div class="card"><i class="fa-solid fa-globe"></i><div><h3>CloudFront for Full App</h3><p>Put CloudFront in front of EC2 or a load balancer.</p></div></div>
+            <div class="card"><i class="fa-brands fa-github"></i><div><h3>OIDC</h3><p>Replace AWS access keys with GitHub OIDC later.</p></div></div>
+          </div>
+        </section>
+
+        <section class="signature">
+          <p>Built as part of my Cloud / DevOps / SRE learning journey</p>
+          <div class="signature-name">Jules Munyaneza</div>
+          <p>GitHub Actions • Docker • AWS ECR • EC2 • MongoDB Atlas • S3 • CloudFront</p>
+        </section>
+        <p class="footer">Documentation designed for learning, repeating, showcasing automation skills, and rebuilding the project later from scratch.</p>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    document.querySelectorAll('pre').forEach((pre) => {
+      const button = document.createElement('button');
+      button.className = 'copy-btn';
+      button.type = 'button';
+      button.innerHTML = '<i class="fa-regular fa-copy"></i> Copy';
+      button.addEventListener('click', async () => {
+        const text = pre.innerText.replace(/^Copy\s*/, '');
+        try {
+          await navigator.clipboard.writeText(text);
+          button.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+          setTimeout(() => button.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 1600);
+        } catch {
+          button.textContent = 'Copy failed';
+          setTimeout(() => button.innerHTML = '<i class="fa-regular fa-copy"></i> Copy', 1600);
+        }
+      });
+      pre.prepend(button);
+    });
+  </script>
+</body>
+</html>
