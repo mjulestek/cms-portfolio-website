@@ -111,5 +111,5 @@ jobs:
             docker compose up -d
 
             # Sync Prisma schema with MongoDB Atlas
-            
-            docker compose exec -T my-app npx prisma db push
+
+            # docker compose exec -T my-app npx prisma db push
